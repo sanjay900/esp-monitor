@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "wifi_manager.h": "c",
+        "http_server.h": "c",
+        "ssd1306_font.h": "c",
+        "string.h": "c"
+    }
+}

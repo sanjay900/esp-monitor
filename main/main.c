@@ -1,42 +1,110 @@
-#include "freertos/FreeRTOS.h"
-#include "esp_wifi.h"
-#include "esp_system.h"
+
 #include "esp_event.h"
-#include "esp_event_loop.h"
-#include "nvs_flash.h"
-#include "driver/gpio.h"
+#include "mqtt.h"
+#include "sht3x.h"
+#include "ssd1306.h"
+#include "ssd1306_default_if.h"
+#include "ssd1306_draw.h"
+#include "ssd1306_font.h"
+#include "tcpip_adapter.h"
+#include "wifi_manager.h"
+#include <stdio.h>
+#include <string.h>
+static const char *TAG = "Environment Sensor";
+#ifdef ESP_PLATFORM // ESP32 (ESP-IDF)
 
-esp_err_t event_handler(void *ctx, system_event_t *event)
-{
-    return ESP_OK;
+// user task stack depth for ESP32
+#define TASK_STACK_DEPTH 2048
+
+#else // ESP8266 (esp-open-rtos)
+
+// user task stack depth for ESP8266
+#define TASK_STACK_DEPTH 256
+
+#endif // ESP_PLATFORM
+#define I2C_BUS 1
+#define I2C_SCL_PIN 22
+#define I2C_SDA_PIN 21
+#define I2C_FREQ I2C_FREQ_100K
+
+/* -- user tasks --------------------------------------------------- */
+
+static sht3x_sensor_t *sensor; // sensor device data structure
+struct SSD1306_Device I2CDisplay;
+static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
+  esp_mqtt_client_handle_t client = event->client;
+  int msg_id;
+  char msg = "";
+  // your_context_t *context = event->context;
+  switch (event->event_id) {
+  case MQTT_EVENT_CONNECTED:
+  msg = "MQTT Connected";
+    break;
+  case MQTT_EVENT_DISCONNECTED:
+  msg = "MQTT Disconnected";
+    break;
+  }
+  SSD1306_FontDrawAnchoredString(&I2CDisplay, TextAnchor_North, msg,
+                                 SSD_COLOR_WHITE);
+  SSD1306_Update(&I2CDisplay);
+  return ESP_OK;
 }
 
-void app_main(void)
-{
-    nvs_flash_init();
-    tcpip_adapter_init();
-    ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
-    ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
-    ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
-    wifi_config_t sta_config = {
-        .sta = {
-            .ssid = CONFIG_ESP_WIFI_SSID,
-            .password = CONFIG_ESP_WIFI_PASSWORD,
-            .bssid_set = false
-        }
-    };
-    ESP_ERROR_CHECK( esp_wifi_set_config(WIFI_IF_STA, &sta_config) );
-    ESP_ERROR_CHECK( esp_wifi_start() );
-    ESP_ERROR_CHECK( esp_wifi_connect() );
-
-    gpio_set_direction(GPIO_NUM_4, GPIO_MODE_OUTPUT);
-    int level = 0;
-    while (true) {
-        gpio_set_level(GPIO_NUM_4, level);
-        level = !level;
-        vTaskDelay(300 / portTICK_PERIOD_MS);
-    }
+void init_screen(void) {
+  SSD1306_I2CMasterInitDefault();
+  SSD1306_I2CMasterAttachDisplayDefault(&I2CDisplay, 128, 64, 0x3C, 16);
+  SSD1306_Clear(&I2CDisplay, SSD_COLOR_BLACK);
+  SSD1306_SetFont(&I2CDisplay, &Font_droid_sans_fallback_11x13);
 }
 
+void addr_event_handler(void *arg, esp_event_base_t base, int32_t event_id,
+                        void *data) {
+  const ip_event_got_ip_t *event = (const ip_event_got_ip_t *)data;
+  char ipData[255];
+  sprintf(ipData, IPSTR "\n" IPSTR "\n" IPSTR, IP2STR(&event->ip_info.ip),
+          IP2STR(&event->ip_info.netmask), IP2STR(&event->ip_info.gw));
+  SSD1306_FontDrawAnchoredString(&I2CDisplay, TextAnchor_Center, ipData,
+                                 SSD_COLOR_WHITE);
+  SSD1306_Update(&I2CDisplay);
+}
+void user_task(void *pvParameters) {
+  float temperature;
+  float humidity;
+
+  // Start periodic measurements with 1 measurement per second.
+  sht3x_start_measurement(sensor, sht3x_periodic_1mps, sht3x_high);
+
+  // Wait until first measurement is ready (constant time of at least 30 ms
+  // or the duration returned from *sht3x_get_measurement_duration*).
+  vTaskDelay(sht3x_get_measurement_duration(sht3x_high));
+
+  TickType_t last_wakeup = xTaskGetTickCount();
+
+  while (1) {
+    // Get the values and do something with them.
+    if (sht3x_get_results(sensor, &temperature, &humidity))
+      ESP_LOGI(TAG, "%.3f SHT3x Sensor: %.2f °C, %.2f %%\n",
+               (double)sdk_system_get_time() * 1e-3, temperature, humidity);
+
+    // Wait until 2 seconds (cycle time) are over.
+    vTaskDelayUntil(&last_wakeup, 2000 / portTICK_PERIOD_MS);
+  }
+}
+void app_main(void) {
+  manager_main(addr_event_handler);
+  init_screen();
+  SSD1306_FontDrawAnchoredString(&I2CDisplay, TextAnchor_North,
+                                 "MQTT Disconnected", SSD_COLOR_WHITE);
+  SSD1306_Update(&I2CDisplay);
+  const esp_mqtt_client_config_t mqtt_cfg = {
+      .uri = "mqtt://172.22.2.163:1883", .event_handle = mqtt_event_handler};
+      
+  
+  i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ);
+
+  // Create the sensors, multiple sensors are possible.
+  if ((sensor = sht3x_init_sensor(I2C_BUS, SHT3x_ADDR_1))) {
+    // Create a user task that uses the sensors.
+    xTaskCreate(user_task, "user_task", TASK_STACK_DEPTH, NULL, 2, 0);
+  }
+}
