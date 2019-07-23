@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>ESP-MONITOR - LOG</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" href="data:,">
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+	<div class="topnav">
+		<a href="index.html">Configuration</a>
+		<a class="active" href="log.html">Log</a>
+		<a href="sensor_data.html">Sensor data</a>
+		<div class="info">
+			Firmware Version: <strong> %F_VERSION%</strong><br>
+			Hardware Version: <strong> %H_VERSION%</strong><br>
+			Sensor Type: <strong> %S_TYPE%</strong><br>
+			Location: <strong> %S_LOCATION%</strong><br>
+		</div>
+	</div> 
+  
+	<h1>ESP-MONITOR - LOG</h1>
+
+	<div style="border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;">
+	%LOG%
+	</div>
+  
+</body>
+</html>
