@@ -1,2 +1,2 @@
-
-void manager_main(void (*event_handler)(void*, esp_event_base_t, int32_t, void*));
+#pragma once
+void manager_main(int (*event_handler)(void *ctx, system_event_t *event));

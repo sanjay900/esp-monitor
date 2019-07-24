@@ -1,6 +1,6 @@
 
 #include "esp_event.h"
-#include "mqtt.h"
+#include "mqtt_handler.h"
 #include "sht3x.h"
 #include "ssd1306.h"
 #include "ssd1306_default_if.h"
@@ -32,16 +32,16 @@ static const char *TAG = "Environment Sensor";
 static sht3x_sensor_t *sensor; // sensor device data structure
 struct SSD1306_Device I2CDisplay;
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
-  esp_mqtt_client_handle_t client = event->client;
-  int msg_id;
-  char msg = "";
+  char* msg = "";
   // your_context_t *context = event->context;
   switch (event->event_id) {
   case MQTT_EVENT_CONNECTED:
-  msg = "MQTT Connected";
+    msg = "MQTT Connected";
     break;
   case MQTT_EVENT_DISCONNECTED:
-  msg = "MQTT Disconnected";
+    msg = "MQTT Disconnected";
+    break;
+  default:
     break;
   }
   SSD1306_FontDrawAnchoredString(&I2CDisplay, TextAnchor_North, msg,
@@ -57,15 +57,16 @@ void init_screen(void) {
   SSD1306_SetFont(&I2CDisplay, &Font_droid_sans_fallback_11x13);
 }
 
-void addr_event_handler(void *arg, esp_event_base_t base, int32_t event_id,
-                        void *data) {
-  const ip_event_got_ip_t *event = (const ip_event_got_ip_t *)data;
+esp_err_t addr_event_handler(void *ctx, system_event_t *event) {
   char ipData[255];
-  sprintf(ipData, IPSTR "\n" IPSTR "\n" IPSTR, IP2STR(&event->ip_info.ip),
-          IP2STR(&event->ip_info.netmask), IP2STR(&event->ip_info.gw));
+  sprintf(ipData, IPSTR "\n" IPSTR "\n" IPSTR,
+          IP2STR(&event->event_info.got_ip.ip_info.ip),
+          IP2STR(&event->event_info.got_ip.ip_info.netmask),
+          IP2STR(&event->event_info.got_ip.ip_info.gw));
   SSD1306_FontDrawAnchoredString(&I2CDisplay, TextAnchor_Center, ipData,
                                  SSD_COLOR_WHITE);
   SSD1306_Update(&I2CDisplay);
+  return 0;
 }
 void user_task(void *pvParameters) {
   float temperature;
@@ -96,10 +97,8 @@ void app_main(void) {
   SSD1306_FontDrawAnchoredString(&I2CDisplay, TextAnchor_North,
                                  "MQTT Disconnected", SSD_COLOR_WHITE);
   SSD1306_Update(&I2CDisplay);
-  const esp_mqtt_client_config_t mqtt_cfg = {
-      .uri = "mqtt://172.22.2.163:1883", .event_handle = mqtt_event_handler};
-      
-  
+  init_mqtt(mqtt_event_handler, "mqtt://172.22.2.163:1883");
+
   i2c_init(I2C_BUS, I2C_SCL_PIN, I2C_SDA_PIN, I2C_FREQ);
 
   // Create the sensors, multiple sensors are possible.
