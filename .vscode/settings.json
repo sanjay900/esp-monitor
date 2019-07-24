@@ -3,6 +3,16 @@
         "wifi_manager.h": "c",
         "http_server.h": "c",
         "ssd1306_font.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "mqtt.h": "c",
+        "mqtt_client.h": "c",
+        "esp_wifi_types.h": "c",
+        "nvs_flash.h": "c",
+        "esp_event.h": "c",
+        "event_groups.h": "c",
+        "esp_event_loop.h": "c",
+        "tcpip_adapter.h": "c",
+        "api.h": "c",
+        "esp_log.h": "c"
     }
 }

@@ -42,6 +42,7 @@ Contains the freeRTOS task and all necessary support
 #include "esp_wifi_types.h"
 #include "esp_log.h"
 #include "nvs.h"
+#include "tcpip_adapter.h"
 #include "nvs_flash.h"
 #include "mdns.h"
 #include "lwip/api.h"
@@ -480,7 +481,7 @@ void wifi_manager_filter_unique( wifi_ap_record_t * aplist, uint16_t * aps) {
 
 
 void wifi_manager( void * pvParameters){
-	void (*event_handler)(void*, esp_event_base_t, int32_t, void*) = pvParameters;
+	int (*event_handler)(void *ctx, system_event_t *event) = pvParameters;
 	/* memory allocation of objects used by the task */
 	wifi_manager_json_mutex = xSemaphoreCreateMutex();
 	accessp_records = (wifi_ap_record_t*)malloc(sizeof(wifi_ap_record_t) * MAX_AP_NUM);
@@ -501,6 +502,7 @@ void wifi_manager( void * pvParameters){
     /* event handler and event group for the wifi driver */
 	wifi_manager_event_group = xEventGroupCreate();
     ESP_ERROR_CHECK(esp_event_loop_init(wifi_manager_event_handler, NULL));
+	ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL) );
 
     /* wifi scanner config */
 	wifi_scan_config_t scan_config = {
@@ -558,7 +560,6 @@ void wifi_manager( void * pvParameters){
 	/* init wifi as station + access point */
 	wifi_init_config_t wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
 	ESP_ERROR_CHECK(esp_wifi_init(&wifi_init_config));
-	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, event_handler, NULL));
 	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
 	ESP_ERROR_CHECK(esp_wifi_set_bandwidth(WIFI_IF_AP, wifi_settings.ap_bandwidth));
