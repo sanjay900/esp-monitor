@@ -3,8 +3,32 @@
 <head>
 	<title>ESP-MONITOR - Configuration</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta charset="utf-8"/>
 	<link rel="icon" href="data:,">
 	<link rel="stylesheet" type="text/css" href="style.css">
+	<script type="text/javascript">
+		function loadXMLDoc() {
+		  var xmlhttp = new XMLHttpRequest();
+		  xmlhttp.onreadystatechange = function() {
+			if (this.readyState == 4 && this.status == 200) {
+					loadData(this);
+			}
+		  };
+		  xmlhttp.open("GET", "config.xml" , true);
+		  xmlhttp.send();
+		}
+
+		function loadData(xml) {
+			var xmlDoc = xml.responseXML;
+			document.getElementById("f_version").innerHTML = xmlDoc.getElementsByTagName("f_version")[0].childNodes[0].nodeValue;
+			document.getElementById("h_version").innerHTML = xmlDoc.getElementsByTagName("h_version")[0].childNodes[0].nodeValue;
+			document.getElementById("sensor_type").innerHTML = xmlDoc.getElementsByTagName("sensor_type")[0].childNodes[0].nodeValue;
+			document.getElementById("location").innerHTML = xmlDoc.getElementsByTagName("location")[0].childNodes[0].nodeValue;
+			var oSerializer = new XMLSerializer();
+			var sXML = oSerializer.serializeToString(xmlDoc);
+			document.getElementById("xml").innerHTML = sXML;
+		}
+	</script>
 </head>
 <body>
 	<div class="topnav">
@@ -20,44 +44,9 @@
 	</div> 
 
 	<h1>ESP-MONITOR - Configuration</h1>
-	<form>
-		<h2>General:</h2>
-		ID:&nbsp;
-		<input type="text" name="id" value="%ID%"><br><br>
-		Name:&nbsp;
-		<input type="text" name="name" value="%NAME%"><br><br>
-		Location:&nbsp;
-		<input type="text" name="location" value="%S_LOCATION%"><br><br>
-		
-		<h2>Sensor:</h2>
-		Sensor type:&nbsp;
-		<select name="sensor_type">
-			<option value="seismic">Seismic</option>
-			<option value="temp_hum" selected>Temperature/Humidity</option>
-		</select> <br><br>
-		Refresh rate:&nbsp;
-		<input type="text" name="refresh_rate" value="%REFRESH_RATE%">s (numbers only)<br><br>
-		Alarm threshold min:&nbsp;
-		<input type="text" name="alarm_treshold_min" value="%ALARM_MIN%"> (numbers only)<br><br>
-		Alarm threshold max:&nbsp;
-		<input type="text" name="alarm_treshold_max" value="%ALARM_MAX%"> (numbers only)<br><br>
-
-		<h2>Network:</h2>
-		ESP32 IP:&nbsp;
-		<input type="text" name="esp32_ip" value="%ESP32_IP%"> <br><br>
-		MQTT Server IP:&nbsp;
-		<input type="text" name="mqtt_ip" value="%MQTT_IP%"> <br><br>
-		
-		<h2>Data Logging:</h2>
-		<input type="radio" name="data_logging" value="%LOG_ACTIV%" checked> Activate<br>
-		<input type="radio" name="data_logging" value="%LOG_UNACTIV%"> Desactivate<br><br>
-		Maximum days in memory:&nbsp;
-		<input type="text" name="log_days" value="%LOG_DAYS%"> <br><br>
-
-		<br>
-		<input type="submit" value="Save">&nbsp;&nbsp; <input type="reset">
-	</form> 
-
-
+	<form method="POST">
+		<textarea id="xml" style="width: 550px; height: 500px;">{{xmlString}}</textarea><br><br>
+		<input type="submit" value="SaveXML"><br><br>
+	</form>
 </body>
 </html>

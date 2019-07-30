@@ -3,6 +3,7 @@
 <head>
 	<title>ESP-MONITOR - DATA</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta charset="utf-8"/>
 	<link rel="icon" href="data:,">
 	<link rel="stylesheet" type="text/css" href="style.css">
 </head>
@@ -32,9 +33,7 @@
 <span style="left:410px;">Division:<select id="dur"><option value="100">100ms</option><option value="200">200ms</option><option value="500">500ms</option><option value="1000">1sec</option></select></span>
 </div>
 </menu>
- 
 <script type="text/javascript">
-
 function GetArduinoInputs(){ //DEMO
 	updateGraph(Math.random()*150,150+Math.random()*150);
 	setTimeout('GetArduinoInputs()',document.getElementById('dur').value);
@@ -115,6 +114,5 @@ function drawPlot(barSel){
 	}
 }
 </script>
-
 </body>
 </html>
