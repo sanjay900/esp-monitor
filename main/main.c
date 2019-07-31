@@ -63,9 +63,11 @@ static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
 {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+		strcpy(ipAdress,"000.000.000.000");
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         if (s_retry_num < WIFI_MAXIMUM_RETRY) {
+			strcpy(ipAdress,"000.000.000.000");
             esp_wifi_connect();
             xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
             s_retry_num++;
@@ -258,7 +260,7 @@ void app_main(void) {
 	if ((sensor = sht3x_init_sensor(I2CSensor_BUS, SHT3x_ADDR_1))) {
 		ESP_LOGD(TAG, "SHT31 Sensor Init OK" );
 		// Create a user task that uses the sensors.
-		xTaskCreate(sensor_read, "sensor_read", TASK_STACK_DEPTH, NULL, 2, 0);	//xTaskCreatePinnedToCore
+		//xTaskCreate(sensor_read, "sensor_read", TASK_STACK_DEPTH, NULL, 2, 0);	//xTaskCreatePinnedToCore
 	}
 	else{
 		ESP_LOGE(TAG, "SHT31 Sensor Init Failed" );

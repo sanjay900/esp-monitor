@@ -6,17 +6,37 @@
 	<meta charset="utf-8"/>
 	<link rel="icon" href="data:,">
 	<link rel="stylesheet" type="text/css" href="style.css">
+	<script type="text/javascript">
+		function loadXMLDoc() {
+		  var xmlhttp = new XMLHttpRequest();
+		  xmlhttp.onreadystatechange = function() {
+			if (this.readyState == 4 && this.status == 200) {
+					loadData(this);
+			}
+		  };
+		  xmlhttp.open("GET", "config.xml" , true);
+		  xmlhttp.send();
+		}
+
+		function loadData(xml) {
+			var xmlDoc = xml.responseXML;
+			document.getElementById("f_version").innerHTML = xmlDoc.getElementsByTagName("f_version")[0].childNodes[0].nodeValue;
+			document.getElementById("h_version").innerHTML = xmlDoc.getElementsByTagName("h_version")[0].childNodes[0].nodeValue;
+			document.getElementById("sensor_type").innerHTML = xmlDoc.getElementsByTagName("sensor_type")[0].childNodes[0].nodeValue;
+			document.getElementById("location").innerHTML = xmlDoc.getElementsByTagName("location")[0].childNodes[0].nodeValue;
+		}
+	</script>
 </head>
-<body>
+<body onload="loadXMLDoc();">
 	<div class="topnav">
 		<a href="index.html">Configuration</a>
 		<a class="active" href="log.html">Log</a>
 		<a href="sensor_data.html">Sensor data</a>
 		<div class="info">
-			Firmware Version: <strong> %F_VERSION%</strong><br>
-			Hardware Version: <strong> %H_VERSION%</strong><br>
-			Sensor Type: <strong> %S_TYPE%</strong><br>
-			Location: <strong> %S_LOCATION%</strong><br>
+			Firmware Version: <strong id="f_version"> %F_VERSION%</strong><br>
+			Hardware Version: <strong id="h_version"> %H_VERSION%</strong><br>
+			Sensor Type: <strong id="sensor_type"> %S_TYPE%</strong><br>
+			Location: <strong id="location"> %S_LOCATION%</strong><br>
 		</div>
 	</div> 
   

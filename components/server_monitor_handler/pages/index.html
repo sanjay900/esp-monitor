@@ -24,9 +24,51 @@
 			document.getElementById("h_version").innerHTML = xmlDoc.getElementsByTagName("h_version")[0].childNodes[0].nodeValue;
 			document.getElementById("sensor_type").innerHTML = xmlDoc.getElementsByTagName("sensor_type")[0].childNodes[0].nodeValue;
 			document.getElementById("location").innerHTML = xmlDoc.getElementsByTagName("location")[0].childNodes[0].nodeValue;
+			document.getElementById("xml").value = "NULL";
 			var oSerializer = new XMLSerializer();
 			var sXML = oSerializer.serializeToString(xmlDoc);
-			document.getElementById("xml").innerHTML = sXML;
+			document.getElementById("xml").value = sXML;
+		}
+		
+		function sendForm() {
+			var formData = document.getElementById("xml").value;
+			var temp = formData.replace(/&lt;/g,"<");
+			formData = temp.replace(/&gt;/g,">");
+			
+		    var xmlhttp = new XMLHttpRequest();
+			xmlhttp.open('POST','config.xml', true);
+			xmlhttp.onreadystatechange = function() {
+				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+					console.log(xmlhttp.responseXML);
+				}
+			};
+			
+			xmlhttp.setRequestHeader('Content-Type', 'text/xml');
+			
+			xmlhttp.send(formData);
+			
+			xmlhttp.onload = function() {
+				if (xmlhttp.status != 200) { // HTTP error?
+					// handle error
+					alert( 'Error: ' + xmlhttp.status);
+					return;
+				}
+				if (xmlhttp.readyState === xmlhttp.DONE) {
+					if (xmlhttp.status === 200) {
+						document.getElementById("response").innerHTML = xmlhttp.responseText;
+						location.reload();
+					}
+				}
+			  // get the response from xhr.response
+			};
+
+			xmlhttp.onerror = function() {
+			  // handle non-HTTP error (e.g. network down)
+			  alert( 'Error: ' + xmlhttp.status);
+			};
+			
+				
+		  return false; // Prevent page from submitting.
 		}
 	</script>
 </head>
@@ -44,9 +86,11 @@
 	</div> 
 
 	<h1>ESP-MONITOR - Configuration</h1>
-	<form method="POST">
-		<textarea id="xml" style="width: 550px; height: 500px;">{{xmlString}}</textarea><br><br>
-		<input type="submit" value="SaveXML"><br><br>
+	<form method="POST" id="config_form" target="_parent">
+		<textarea id="xml" form="config_form" style="width: 550px; height: 500px;">{{xmlString}}</textarea><br><br>
+		<input type="submit" value="SaveXML" onclick="return sendForm();">
 	</form>
+	<br><br>
+	<p id="response" ></p>
 </body>
 </html>

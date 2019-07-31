@@ -195,7 +195,8 @@ static esp_err_t upload_post_handler(httpd_req_t *req)
     /* Content length of the request gives
      * the size of the file being uploaded */
     int remaining = req->content_len;
-
+	ESP_LOGI(TAG, "Remaining size : %d", remaining);
+        
     while (remaining > 0) {
 
         ESP_LOGI(TAG, "Remaining size : %d", remaining);
@@ -292,6 +293,10 @@ esp_err_t start_server()
 		.handler   = upload_post_handler,
 		.user_ctx  = server_data
 	};
+	httpd_register_uri_handler(server, &upload_post);
+	upload_post.uri = "/index.html";
+	httpd_register_uri_handler(server, &upload_post);
+	upload_post.uri = "/config.xml";
 	httpd_register_uri_handler(server, &upload_post);
 	
     return ESP_OK;
