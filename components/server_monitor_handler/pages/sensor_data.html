@@ -7,27 +7,35 @@
 	<link rel="icon" href="data:,">
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<script type="text/javascript">
-		function loadXMLDoc() {
+		function loadConfigDoc() {
 		  var xmlhttp = new XMLHttpRequest();
 		  xmlhttp.onreadystatechange = function() {
 			if (this.readyState == 4 && this.status == 200) {
 					loadData(this);
 			}
 		  };
-		  xmlhttp.open("GET", "config.xml" , true);
+		  xmlhttp.open("GET", "config.txt" , true);
 		  xmlhttp.send();
 		}
 
-		function loadData(xml) {
-			var xmlDoc = xml.responseXML;
-			document.getElementById("f_version").innerHTML = xmlDoc.getElementsByTagName("f_version")[0].childNodes[0].nodeValue;
-			document.getElementById("h_version").innerHTML = xmlDoc.getElementsByTagName("h_version")[0].childNodes[0].nodeValue;
-			document.getElementById("sensor_type").innerHTML = xmlDoc.getElementsByTagName("sensor_type")[0].childNodes[0].nodeValue;
-			document.getElementById("location").innerHTML = xmlDoc.getElementsByTagName("location")[0].childNodes[0].nodeValue;
+		function loadData(txt) {
+			var allText = txt.responseText;
+			var pos = allText.indexOf("f_version=") + 10;
+			var end = allText.indexOf(";", pos);
+			document.getElementById("f_version").innerHTML = allText.slice(pos, end);
+			pos = allText.indexOf("h_version=") + 10;
+			end = allText.indexOf(";", pos);
+			document.getElementById("h_version").innerHTML = allText.slice(pos, end);
+			pos = allText.indexOf("sensor_type=") + 12;
+			end = allText.indexOf(";", pos);
+			document.getElementById("sensor_type").innerHTML = allText.slice(pos, end);
+			pos = allText.indexOf("location=") + 9;
+			end = allText.indexOf(";", pos);
+			document.getElementById("location").innerHTML = allText.slice(pos, end);
 		}
 	</script>
 </head>
-<body onload="drawGraph(); loadXMLDoc();">
+<body onload="drawGraph(); loadConfigDoc();">
 	<div class="topnav">
 		<a href="index.html">Configuration</a>
 		<a href="log.html">Log</a>

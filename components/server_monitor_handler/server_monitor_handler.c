@@ -58,6 +58,8 @@ static esp_err_t set_content_type_from_file(httpd_req_t *req, const char *filena
         return httpd_resp_set_type(req, "text/xml");
     }else if (IS_FILE_EXT(filename, ".css")) {
         return httpd_resp_set_type(req, "text/css");
+    }else if (IS_FILE_EXT(filename, ".txt")) {
+        return httpd_resp_set_type(req, "text/plain");
     }
     /* This is a limited set only */
     /* For any other type always set as plain text */
@@ -168,10 +170,10 @@ static esp_err_t download_get_handler(httpd_req_t *req)
 /* Handler to upload a file onto the server */
 static esp_err_t upload_post_handler(httpd_req_t *req)
 {
-    char filepath[FILE_PATH_MAX] = "/spiffs/config.xml";
+    char filepath[FILE_PATH_MAX] = "/spiffs/config.txt";
     FILE *fd = NULL;
     
-    const char *filename = "config.xml";
+    const char *filename = "config.txt";
 	
 
     ESP_LOGI(TAG, "Deleting file : %s", filename);
@@ -296,7 +298,7 @@ esp_err_t start_server()
 	httpd_register_uri_handler(server, &upload_post);
 	upload_post.uri = "/index.html";
 	httpd_register_uri_handler(server, &upload_post);
-	upload_post.uri = "/config.xml";
+	upload_post.uri = "/config.txt";
 	httpd_register_uri_handler(server, &upload_post);
 	
     return ESP_OK;
