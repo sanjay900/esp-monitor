@@ -75,9 +75,28 @@ static const char *TAG = "Environment Sensor";
 static char* mqtt_status_str = "";
 static bool mqtt_status = 0;
 
+typedef struct{
+	char f_version[4];
+	char h_version[4];
+	int id;
+	char name[20];
+	char location[20];
+	char sensor_type[4];
+	int refresh_rate;
+	int alarm_treshold_min;
+	int alarm_treshold_max;
+	char esp32_ip[15];
+	char mqtt_ip[30];
+	int log_activ;
+	int log_days;
+} config_struct;
+
+static config_struct config_data;
+
 /* -- Declaration --------------------------------------------------- */
 esp_err_t start_server(void);
 static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
+static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
 static void eth_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
 static void got_ip_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event);
@@ -86,7 +105,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event);
 
 /** INIT NVS **/
 esp_err_t init_NVS(void){
-	ESP_LOGI(TAG, "Initializing NVS");
+	ESP_LOGD(TAG, "Initializing NVS");
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
       ESP_ERROR_CHECK(nvs_flash_erase());
@@ -97,7 +116,7 @@ esp_err_t init_NVS(void){
 
 /** INIT SPIFFS **/
 esp_err_t init_spiffs(void){
-    ESP_LOGI(TAG, "Initializing SPIFFS");
+    ESP_LOGD(TAG, "Initializing SPIFFS");
 
     esp_vfs_spiffs_conf_t conf = {
       .base_path = "/spiffs",
@@ -125,7 +144,7 @@ esp_err_t init_spiffs(void){
         return ESP_FAIL;
     }
 
-    ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
+    ESP_LOGD(TAG, "Partition size: total: %d, used: %d", total, used);
     return ESP_OK;
 }
 
@@ -136,7 +155,7 @@ void init_coms(void){
 
 #ifdef ACTIVE_WIFI
 	//Init WIFI
-	ESP_LOGI(TAG, "Initializing WIFI...");
+	ESP_LOGD(TAG, "Initializing WIFI...");
     s_wifi_event_group = xEventGroupCreate();
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -144,7 +163,7 @@ void init_coms(void){
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &got_ip_event_handler, NULL));
 
     wifi_config_t wifi_config = {
@@ -157,13 +176,13 @@ void init_coms(void){
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
     ESP_ERROR_CHECK(esp_wifi_start() );
 
-    ESP_LOGI(TAG, "wifi_init_sta finished.");
+    ESP_LOGD(TAG, "wifi_init_sta finished.");
     ESP_LOGI(TAG, "connect to ap SSID:%s password:%s",
              ESP_WIFI_SSID, ESP_WIFI_PASS);
 #endif // ACTIVE_WIFI
 
 #ifdef ACTIVE_ETHERNET
-    ESP_LOGI(TAG, "Initializing ETHERNET...");
+    ESP_LOGD(TAG, "Initializing ETHERNET...");
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_ERROR_CHECK(tcpip_adapter_set_default_eth_handlers());
     ESP_ERROR_CHECK(esp_event_handler_register(ETH_EVENT, ESP_EVENT_ANY_ID, &eth_event_handler, NULL));
@@ -182,7 +201,7 @@ void init_coms(void){
     esp_eth_config_t config = ETH_DEFAULT_CONFIG(mac, phy);
     esp_eth_handle_t eth_handle = NULL;
     ESP_ERROR_CHECK(esp_eth_driver_install(&config, &eth_handle));
-	ESP_LOGI(TAG, "ETHERNET initialized");
+	ESP_LOGD(TAG, "ETHERNET initialized");
 #endif // ACTIVE_ETHERNET
 }
 
@@ -190,20 +209,25 @@ void init_coms(void){
 
 /** Event handler */
 static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data){
+
+}
+
 #ifdef ACTIVE_WIFI
-    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+/** Event handler for Wifi events */
+static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data){
+    if (event_id == WIFI_EVENT_STA_START) {
 		esp_wifi_connect();
-    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+    } else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
         if (s_retry_num < WIFI_MAXIMUM_RETRY) {
 			esp_wifi_connect();
             xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
             s_retry_num++;
-            ESP_LOGI(TAG, "retry to connect to the AP");
+            ESP_LOGD(TAG, "retry to connect to the AP");
         }
-        ESP_LOGI(TAG,"connect to the AP fail");
+        ESP_LOGD(TAG,"connect to the AP fail");
     }
-#endif // ACTIVE_WIFI
 }
+#endif // ACTIVE_WIFI
 
 #ifdef ACTIVE_ETHERNET
 /** Event handler for Ethernet events */
@@ -215,18 +239,18 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base, int32_t ev
     switch (event_id) {
     case ETHERNET_EVENT_CONNECTED:
         esp_eth_ioctl(eth_handle, ETH_CMD_G_MAC_ADDR, mac_addr);
-        ESP_LOGI(TAG, "Ethernet Link Up");
-        ESP_LOGI(TAG, "Ethernet HW Addr %02x:%02x:%02x:%02x:%02x:%02x",
+        ESP_LOGD(TAG, "Ethernet Link Up");
+        ESP_LOGD(TAG, "Ethernet HW Addr %02x:%02x:%02x:%02x:%02x:%02x",
                  mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
         break;
     case ETHERNET_EVENT_DISCONNECTED:
-        ESP_LOGI(TAG, "Ethernet Link Down");
+        ESP_LOGD(TAG, "Ethernet Link Down");
         break;
     case ETHERNET_EVENT_START:
-        ESP_LOGI(TAG, "Ethernet Started");
+        ESP_LOGD(TAG, "Ethernet Started");
         break;
     case ETHERNET_EVENT_STOP:
-        ESP_LOGI(TAG, "Ethernet Stopped");
+        ESP_LOGD(TAG, "Ethernet Stopped");
         break;
     default:
         break;
@@ -239,7 +263,7 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base, int32_t ev
 static void got_ip_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data){
 
     ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-    const tcpip_adapter_ip_info_t *ip_info = &event->ip_info;
+    tcpip_adapter_ip_info_t *ip_info = &event->ip_info;
 
 	ESP_LOGI(TAG, "Got IP Address");
     ESP_LOGI(TAG, "~~~~~~~~~~~");
@@ -279,6 +303,62 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
 }
 
 /* -- User tasks --------------------------------------------------- */
+char *extract_between(const char *str, const char *p1, const char *p2){
+	const char *i1 = strstr(str, p1);
+	if(i1 != NULL){
+		const size_t pl1 = strlen(p1);
+		const char *i2 = strstr(i1 + pl1, p2);
+		if(p2 != NULL){
+			/* Found both markers, extract text. */
+			const size_t mlen = i2 - (i1 + pl1);
+			char *ret = malloc(mlen + 1);
+			if(ret != NULL){
+				memcpy(ret, i1 + pl1, mlen);
+				ret[mlen] = '\0';
+				return ret;
+			}
+		}
+	}
+	return NULL;
+}
+  
+static esp_err_t load_config(void){
+	const char *filepath = "/spiffs/config.txt";
+    FILE *fd = NULL;
+
+    fd = fopen(filepath, "r");
+    if (!fd) {
+        ESP_LOGE(TAG, "Failed to open file : %s", filepath);
+        return ESP_FAIL;
+    }
+	fseek(fd, 0, SEEK_END);
+	unsigned int file_size = ftell(fd);
+	fseek(fd, 0, SEEK_SET);
+	char *file_buf = (char *)malloc(file_size);
+	fread(file_buf, file_size, 1, fd);
+	
+    fclose(fd);
+	ESP_LOGI(TAG, "Config file content : ");
+	ESP_LOGI(TAG, "%s", file_buf);
+	
+	strcpy(config_data.f_version, extract_between(file_buf, "f_version=", ";"));
+	strcpy(config_data.h_version, extract_between(file_buf, "h_version=", ";"));
+	config_data.id = atoi(extract_between(file_buf, "id=", ";"));
+	strcpy(config_data.name, extract_between(file_buf, "name=", ";"));
+	strcpy(config_data.location, extract_between(file_buf, "location=", ";"));
+	strcpy(config_data.sensor_type, extract_between(file_buf, "sensor_type=", ";"));
+	config_data.refresh_rate = atoi(extract_between(file_buf, "refresh_rate=", ";"));
+	config_data.alarm_treshold_min = atoi(extract_between(file_buf, "alarm_treshold_min=", ";"));
+	config_data.alarm_treshold_max = atoi(extract_between(file_buf, "alarm_treshold_max=", ";"));
+	strcpy(config_data.esp32_ip, extract_between(file_buf, "esp32_ip=", ";"));
+	strcpy(config_data.mqtt_ip, extract_between(file_buf, "mqtt_ip=", ";"));
+	config_data.log_activ = atoi(extract_between(file_buf, "log_activ=", ";"));
+	config_data.log_days = atoi(extract_between(file_buf, "log_days=", ";"));
+
+	//ESP_LOGI(TAG, "%s", config_data);
+	
+	return ESP_OK;
+}
 
 #ifdef ACTIVE_SCREEN
 /** Display TASK */
@@ -297,13 +377,14 @@ void display_task(void *pvParameters) {
 #ifdef ACTIVE_ETHERNET
 		tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_ETH, &ipInfo);
 #endif // ACTIVE_ETHERNET
-		SSD1306_FontDrawAnchoredString(&I2CDisplay, TextAnchor_NorthWest, sensorData, SSD_COLOR_WHITE);
-		SSD1306_FontDrawAnchoredString(&I2CDisplay, TextAnchor_Center, mqtt_status_str,SSD_COLOR_WHITE);
+		SSD1306_FontDrawString(&I2CDisplay, 0, 0, sensorData, SSD_COLOR_WHITE);
+		SSD1306_FontDrawString(&I2CDisplay, 0, I2CDisplayHeight/4, mqtt_status_str,SSD_COLOR_WHITE);
+		//SSD1306_FontDrawString(&I2CDisplay, 0, 2*I2CDisplayHeight/4, config_data.location, SSD_COLOR_WHITE);
 		sprintf(ipAdd,IPSTR, IP2STR(&ipInfo.ip));
-		SSD1306_FontDrawAnchoredString(&I2CDisplay, TextAnchor_SouthWest, ipAdd, SSD_COLOR_WHITE);
+		SSD1306_FontDrawString(&I2CDisplay, 0, 3*I2CDisplayHeight/4, ipAdd, SSD_COLOR_WHITE);
 		SSD1306_Update(&I2CDisplay);
 		// Wait until 2 seconds (cycle time) are over.
-		vTaskDelayUntil(&last_wakeup, 2000 / portTICK_PERIOD_MS);
+		vTaskDelayUntil(&last_wakeup, config_data.refresh_rate / portTICK_PERIOD_MS);
 	}
 }
 #endif // ACTIVE_SCREEN
@@ -328,11 +409,11 @@ void sensor_read(void *pvParameters) {
 					(double)(clock() * 1000 / CLOCKS_PER_SEC), temperature, humidity);
 		} 
 		else {
-			ESP_LOGI(TAG, "sht31_readTempHum : failed");
+			ESP_LOGE(TAG, "sht31_readTempHum : failed");
 		}
 #endif // ACTIVE_SHT31
 		// Wait until 2 seconds (cycle time) are over.
-		vTaskDelayUntil(&last_wakeup, 2000 / portTICK_PERIOD_MS);
+		vTaskDelayUntil(&last_wakeup, config_data.refresh_rate / portTICK_PERIOD_MS);
 	}
 
 }
@@ -343,7 +424,7 @@ void mqtt_send(void *pvParameters) {
 	while (1) {
 
 		// Wait until 2 seconds (cycle time) are over.
-		vTaskDelayUntil(&last_wakeup, 2000 / portTICK_PERIOD_MS);
+		vTaskDelayUntil(&last_wakeup, config_data.refresh_rate / portTICK_PERIOD_MS);
 	}
 
 }
@@ -354,9 +435,13 @@ void app_main(void) {
 	//vTaskDelay(1000);
 	
 	ESP_LOGD(TAG, "Initializing processes" );
+	ESP_LOGD(TAG, "IDF-Version" );
+	ESP_LOGD(TAG, "%s" , IDF_VER);
 	
 	//Spiffs 
     ESP_ERROR_CHECK(init_spiffs());
+	//Config
+	load_config();
 	//NVS
 	ESP_ERROR_CHECK(init_NVS());
 	//Coms
@@ -373,7 +458,7 @@ void app_main(void) {
 			SSD1306_Clear(&I2CDisplay, SSD_COLOR_BLACK);
 			SSD1306_SetFont(&I2CDisplay, &Font_droid_sans_fallback_11x13);
 			ESP_LOGD(TAG, "Screen Init OK" );
-			SSD1306_FontDrawAnchoredString( &I2CDisplay, TextAnchor_NorthWest, "MQTT Disconnected", SSD_COLOR_WHITE );
+			//SSD1306_FontDrawAnchoredString( &I2CDisplay, TextAnchor_NorthWest, "MQTT Disconnected", SSD_COLOR_WHITE );
 			SSD1306_Update( &I2CDisplay );
 			// Create a user task that uses the display, low priority.
 			xTaskCreate(display_task, "display_task", TASK_STACK_DEPTH, NULL, 1, 0);
@@ -408,7 +493,7 @@ void app_main(void) {
 	}
 	
 	ESP_LOGD(TAG, "MQTT Initialize");
-	init_mqtt(mqtt_event_handler, "mqtt://172.22.1.64:1883");
+	init_mqtt(mqtt_event_handler, config_data.mqtt_ip);
 	xTaskCreate(mqtt_send, "mqtt_send", TASK_STACK_DEPTH, NULL, 1, 0);	//xTaskCreatePinnedToCore
 	
 	ESP_LOGD(TAG, "Initializing done" );

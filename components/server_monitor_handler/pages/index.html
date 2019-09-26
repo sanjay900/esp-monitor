@@ -57,11 +57,13 @@
 					return;
 				}
 				if (xmlhttp.readyState === xmlhttp.DONE) {
+					//alert("File uploaded successfully, Rebooting...");
 					if (xmlhttp.status === 200) {
-						document.getElementById("response").innerHTML = xmlhttp.responseText;
-						location.reload();
+						alert(xmlhttp.responseText);
+						//setTimeout(location.reload(), 8000);
 					}
 				}
+				alert("File uploaded, Rebooting...");
 			  // get the response from xhr.response
 			};
 
@@ -91,9 +93,7 @@
 	<h1>ESP-MONITOR - Configuration</h1>
 	<form method="POST" id="config_form" target="_parent">
 		<textarea id="txt" style="width: 550px; height: 500px;">{{xmlString}}</textarea><br><br>
-		<input type="submit" value="SaveConfig" onclick="return sendForm();">
+		<input type="submit" value="Save Config and Restart" onclick="return sendForm();">
 	</form>
-	<br><br>
-	<p id="response" ></p>
 </body>
 </html>

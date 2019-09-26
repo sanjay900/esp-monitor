@@ -38,10 +38,14 @@ struct file_server_data {
     char scratch[SCRATCH_BUFSIZE];
 };
 
+static httpd_handle_t server = NULL;
+
 static const char *TAG = "server_monitor_handler";
 
 #define IS_FILE_EXT(filename, ext) \
     (strcasecmp(&filename[strlen(filename) - sizeof(ext) + 1], ext) == 0)
+	
+static void stop_webserver(httpd_handle_t server_handle);
 
 /* Set HTTP response content type according to file extension */
 static esp_err_t set_content_type_from_file(httpd_req_t *req, const char *filename)
@@ -134,7 +138,7 @@ static esp_err_t download_get_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
 
-    ESP_LOGI(TAG, "Sending file : %s (%ld bytes)...", filename, file_stat.st_size);
+    ESP_LOGD(TAG, "Sending file : %s (%ld bytes)...", filename, file_stat.st_size);
     set_content_type_from_file(req, filename);
 
     /* Retrieve the pointer to scratch buffer for temporary storage */
@@ -160,7 +164,7 @@ static esp_err_t download_get_handler(httpd_req_t *req)
 
     /* Close file after sending complete */
     fclose(fd);
-    ESP_LOGI(TAG, "File sending complete");
+    ESP_LOGD(TAG, "File sending complete");
 
     /* Respond with an empty chunk to signal HTTP response completion */
     httpd_resp_send_chunk(req, NULL, 0);
@@ -175,8 +179,7 @@ static esp_err_t upload_post_handler(httpd_req_t *req)
     
     const char *filename = "config.txt";
 	
-
-    ESP_LOGI(TAG, "Deleting file : %s", filename);
+    ESP_LOGD(TAG, "Deleting file : %s", filename);
     /* Delete old file */
     unlink(filepath);
 
@@ -188,7 +191,7 @@ static esp_err_t upload_post_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
 
-    ESP_LOGI(TAG, "Receiving file : %s...", filename);
+    ESP_LOGD(TAG, "Receiving file : %s...", filename);
 
     /* Retrieve the pointer to scratch buffer for temporary storage */
     char *buf = ((struct file_server_data *)req->user_ctx)->scratch;
@@ -197,11 +200,11 @@ static esp_err_t upload_post_handler(httpd_req_t *req)
     /* Content length of the request gives
      * the size of the file being uploaded */
     int remaining = req->content_len;
-	ESP_LOGI(TAG, "Remaining size : %d", remaining);
+	ESP_LOGD(TAG, "Remaining size : %d", remaining);
         
     while (remaining > 0) {
 
-        ESP_LOGI(TAG, "Remaining size : %d", remaining);
+        ESP_LOGD(TAG, "Remaining size : %d", remaining);
         /* Receive the file part by part into a buffer */
         if ((received = httpd_req_recv(req, buf, MIN(remaining, SCRATCH_BUFSIZE))) <= 0) {
             if (received == HTTPD_SOCK_ERR_TIMEOUT) {
@@ -240,9 +243,17 @@ static esp_err_t upload_post_handler(httpd_req_t *req)
 
     /* Close file upon upload completion */
     fclose(fd);
-    ESP_LOGI(TAG, "File reception complete");
+    ESP_LOGD(TAG, "File reception complete");
 
-    httpd_resp_sendstr(req, "File uploaded successfully");
+    httpd_resp_sendstr(req, "File uploaded successfully, Rebooting...");
+	//ESP_LOGD(TAG, "Stop webserver");
+	//httpd_stop(server);
+	//stop_webserver(server);
+	// re-load config!! or reboot sensor?
+	// load_config();
+	ESP_LOGD(TAG, "Restart");
+	esp_restart();		/********* REBOOT To Reload config ************/
+	
     return ESP_OK;
 }
 
@@ -266,7 +277,6 @@ esp_err_t start_server()
     strlcpy(server_data->base_path, base_path,
             sizeof(server_data->base_path));
 			
-    httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
     /* Use the URI wildcard matching function in order to
@@ -274,7 +284,7 @@ esp_err_t start_server()
      * target URIs which match the wildcard scheme */
     config.uri_match_fn = httpd_uri_match_wildcard;
 
-    ESP_LOGI(TAG, "Starting HTTP Server");
+    ESP_LOGD(TAG, "Starting HTTP Server");
     if (httpd_start(&server, &config) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to start file server!");
         return ESP_FAIL;
@@ -302,4 +312,13 @@ esp_err_t start_server()
 	httpd_register_uri_handler(server, &upload_post);
 	
     return ESP_OK;
+}
+
+/* Function for stopping the webserver */
+static void stop_webserver(httpd_handle_t server_handle)
+{
+    if (server_handle) {
+        /* Stop the httpd server */
+        httpd_stop(server_handle);
+    }
 }
