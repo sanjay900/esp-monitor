@@ -11,11 +11,12 @@ SHT31					- 0  - done - tested
 D7s						- 10 - 
 MQTT init				- 2  - to complete / hardner
 MQTT used				- 3  - started
+MQTT secured			- 10 -
 SPIFFS					- 0  - done - tested
 LORA					- 10 - 
 Read local config		- 0  - done - tested
 Save local config		- 10 -
-Use local settings		- 10 - started - restart
+Use local settings		- 10 - started
 WebServer settings		- 0  - done - tested	
 WebServer/remote log	- 10 - 
 Webserver display		- 10 - 

@@ -8,6 +8,6 @@ refresh_rate=2000;
 alarm_treshold_min=10;
 alarm_treshold_max=40;
 esp32_ip=172.22.2.236;
-mqtt_ip=mqtt://172.22.1.64:1883;
+mqtt_ip=mqtt.eclipse.org:1883;
 log_activ=0;
 log_days=0;

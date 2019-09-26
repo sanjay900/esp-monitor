@@ -17,8 +17,7 @@
 #include "lwip/sys.h"
 #include "esp_eth.h"
 #include "esp_wifi.h"
-
-#include "mqtt_handler.h"
+#include "mqtt_client.h"
 
 static const char *TAG = "Environment Sensor";
 
@@ -72,8 +71,13 @@ static const char *TAG = "Environment Sensor";
 	struct SSD1306_Device I2CDisplay;
 #endif // ACTIVE_SCREEN
 
-static char* mqtt_status_str = "";
-static bool mqtt_status = 0;
+static esp_mqtt_client_handle_t mqttClient;
+
+static bool mqttStatus = 0;
+static bool isConnected = 0;
+static char mqttTopic[30];
+static char humTopic[30];
+static char tempTopic[30];
 
 typedef struct{
 	char f_version[4];
@@ -99,7 +103,7 @@ static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_
 static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
 static void eth_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
 static void got_ip_event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
-static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event);
+static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
 
 /* -- INIT --------------------------------------------------- */
 
@@ -205,6 +209,28 @@ void init_coms(void){
 #endif // ACTIVE_ETHERNET
 }
 
+/** INIT MQTT **/
+static void mqtt_app_start(void)
+{
+    esp_mqtt_client_config_t mqtt_cfg = {
+        .uri = config_data.mqtt_ip,
+    };
+
+    mqttClient = esp_mqtt_client_init(&mqtt_cfg);
+    esp_mqtt_client_register_event(mqttClient, ESP_EVENT_ANY_ID, mqtt_event_handler, mqttClient);
+    esp_mqtt_client_start(mqttClient);
+	strcpy(mqttTopic, config_data.name);
+	strcat(mqttTopic, "\\");
+	strcat(mqttTopic, config_data.location);
+	strcat(mqttTopic, "\\");
+	strcat(mqttTopic, config_data.sensor_type);
+	strcat(mqttTopic, "\\");
+	strcpy(mqttTopic, tempTopic);
+	strcat(tempTopic, "temperature");
+	strcpy(mqttTopic, humTopic);
+	strcat(humTopic, "humidity");
+}
+
 /* -- Events Handlers --------------------------------------------------- */
 
 /** Event handler */
@@ -222,6 +248,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t e
 			esp_wifi_connect();
             xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
             s_retry_num++;
+			isConnected = 0;
             ESP_LOGD(TAG, "retry to connect to the AP");
         }
         ESP_LOGD(TAG,"connect to the AP fail");
@@ -244,12 +271,14 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base, int32_t ev
                  mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
         break;
     case ETHERNET_EVENT_DISCONNECTED:
+		isConnected = 0;
         ESP_LOGD(TAG, "Ethernet Link Down");
         break;
     case ETHERNET_EVENT_START:
         ESP_LOGD(TAG, "Ethernet Started");
         break;
     case ETHERNET_EVENT_STOP:
+		isConnected = 0;
         ESP_LOGD(TAG, "Ethernet Stopped");
         break;
     default:
@@ -283,23 +312,47 @@ static void got_ip_event_handler(void* arg, esp_event_base_t event_base, int32_t
 		
 	}
 #endif // ACTIVE_ETHERNET
+	isConnected = 1;
 }
 
 /** Event handler for MQTT events */
-static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
-	switch (event->event_id) {
-		case MQTT_EVENT_CONNECTED:
-			mqtt_status = "MQTT Connected";
-			mqtt_status = 1;
-			break;
-		case MQTT_EVENT_DISCONNECTED:
-			mqtt_status = "MQTT Disconnected";
-			mqtt_status = 0;
-			break;
-		default:
-			break;
-	}
-	return ESP_OK;
+static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
+    ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%d", base, event_id);
+    esp_mqtt_event_handle_t event = event_data;    
+	esp_mqtt_client_handle_t client = event->client;
+    int msg_id;
+    // your_context_t *context = event->context;
+    switch (event->event_id) {
+        case MQTT_EVENT_CONNECTED:
+            ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
+            mqttStatus = 1;
+            break;
+        case MQTT_EVENT_DISCONNECTED:
+            ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+			mqttStatus = 0;
+            break;
+        case MQTT_EVENT_SUBSCRIBED:
+            ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
+            break;
+        case MQTT_EVENT_UNSUBSCRIBED:
+            ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
+            break;
+        case MQTT_EVENT_PUBLISHED:
+            ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
+            break;
+        case MQTT_EVENT_DATA:
+            ESP_LOGI(TAG, "MQTT_EVENT_DATA");
+            ESP_LOGI(TAG, "TOPIC=%.*s", event->topic_len, event->topic);
+            ESP_LOGI(TAG, "DATA=%.*s", event->data_len, event->data);
+            break;
+        case MQTT_EVENT_ERROR:
+            ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
+            break;
+        default:
+            ESP_LOGI(TAG, "Other event id:%d", event->event_id);
+            break;
+    }
+    //return ESP_OK;
 }
 
 /* -- User tasks --------------------------------------------------- */
@@ -378,7 +431,7 @@ void display_task(void *pvParameters) {
 		tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_ETH, &ipInfo);
 #endif // ACTIVE_ETHERNET
 		SSD1306_FontDrawString(&I2CDisplay, 0, 0, sensorData, SSD_COLOR_WHITE);
-		SSD1306_FontDrawString(&I2CDisplay, 0, I2CDisplayHeight/4, mqtt_status_str,SSD_COLOR_WHITE);
+		//SSD1306_FontDrawString(&I2CDisplay, 0, I2CDisplayHeight/4, mqtt_status_str,SSD_COLOR_WHITE);
 		//SSD1306_FontDrawString(&I2CDisplay, 0, 2*I2CDisplayHeight/4, config_data.location, SSD_COLOR_WHITE);
 		sprintf(ipAdd,IPSTR, IP2STR(&ipInfo.ip));
 		SSD1306_FontDrawString(&I2CDisplay, 0, 3*I2CDisplayHeight/4, ipAdd, SSD_COLOR_WHITE);
@@ -415,14 +468,27 @@ void sensor_read(void *pvParameters) {
 		// Wait until 2 seconds (cycle time) are over.
 		vTaskDelayUntil(&last_wakeup, config_data.refresh_rate / portTICK_PERIOD_MS);
 	}
-
 }
 
 void mqtt_send(void *pvParameters) {
+	char temperatureChar[64], humidityChar[64];
+	int msg_id;
 	TickType_t last_wakeup = xTaskGetTickCount();
 
 	while (1) {
-
+		if(mqttStatus){
+			sprintf(temperatureChar, "%f", temperature);
+			sprintf(humidityChar, "%f", humidity);
+			msg_id = esp_mqtt_client_publish(mqttClient, tempTopic, temperatureChar, 0, 1, 0);
+			ESP_LOGD(TAG, "sent publish successful, msg_id=%d", msg_id);
+			msg_id = esp_mqtt_client_publish(mqttClient, humTopic, humidityChar, 0, 1, 0);
+			ESP_LOGD(TAG, "sent publish successful, msg_id=%d", msg_id);
+		}
+		else{
+			//reconnect
+			while(esp_mqtt_client_reconnect(mqttClient) != ESP_OK);
+		}
+		
 		// Wait until 2 seconds (cycle time) are over.
 		vTaskDelayUntil(&last_wakeup, config_data.refresh_rate / portTICK_PERIOD_MS);
 	}
@@ -437,6 +503,13 @@ void app_main(void) {
 	ESP_LOGD(TAG, "Initializing processes" );
 	ESP_LOGD(TAG, "IDF-Version" );
 	ESP_LOGD(TAG, "%s" , IDF_VER);
+	/*esp_log_level_set("*", ESP_LOG_INFO);
+    esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
+    esp_log_level_set("MQTT_EXAMPLE", ESP_LOG_VERBOSE);
+    esp_log_level_set("TRANSPORT_TCP", ESP_LOG_VERBOSE);
+    esp_log_level_set("TRANSPORT_SSL", ESP_LOG_VERBOSE);
+    esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
+    esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);*/
 	
 	//Spiffs 
     ESP_ERROR_CHECK(init_spiffs());
@@ -447,9 +520,6 @@ void app_main(void) {
 	//Coms
 	init_coms();
 	
-
-    ESP_ERROR_CHECK(start_server());
-		
 #ifdef ACTIVE_SCREEN
 	// Init Screen
 	ESP_LOGD(TAG, "Screen Initialize" );
@@ -458,10 +528,8 @@ void app_main(void) {
 			SSD1306_Clear(&I2CDisplay, SSD_COLOR_BLACK);
 			SSD1306_SetFont(&I2CDisplay, &Font_droid_sans_fallback_11x13);
 			ESP_LOGD(TAG, "Screen Init OK" );
-			//SSD1306_FontDrawAnchoredString( &I2CDisplay, TextAnchor_NorthWest, "MQTT Disconnected", SSD_COLOR_WHITE );
+			SSD1306_FontDrawAnchoredString( &I2CDisplay, TextAnchor_NorthWest, "Waiting for connection...", SSD_COLOR_WHITE );
 			SSD1306_Update( &I2CDisplay );
-			// Create a user task that uses the display, low priority.
-			xTaskCreate(display_task, "display_task", TASK_STACK_DEPTH, NULL, 1, 0);
 		}
 		else{
 			ESP_LOGE(TAG, "Screen attach failed" );
@@ -471,7 +539,20 @@ void app_main(void) {
 		ESP_LOGE(TAG, "Screen I2C init failed" );
 	}
 #endif // ACTIVE_SCREEN	
+	
+	//Wait for connection
+	ESP_LOGI(TAG, "Waiting for connection before continuing to init" );
+	while(isConnected == 0){
+		ESP_LOGI(TAG, "." );
+	};
 
+    ESP_ERROR_CHECK(start_server());
+
+		
+#ifdef ACTIVE_SCREEN
+	// Create a user task that uses the display, low priority.
+	xTaskCreate(display_task, "display_task", TASK_STACK_DEPTH, NULL, 1, 0);
+#endif // ACTIVE_SCREEN	
 
 	// Sensor
 	ESP_LOGD(TAG, "Sensor Initialize");
@@ -492,8 +573,9 @@ void app_main(void) {
 		ESP_LOGE(TAG, "Sensor Init Failed" );
 	}
 	
+	
 	ESP_LOGD(TAG, "MQTT Initialize");
-	init_mqtt(mqtt_event_handler, config_data.mqtt_ip);
+	mqtt_app_start();
 	xTaskCreate(mqtt_send, "mqtt_send", TASK_STACK_DEPTH, NULL, 1, 0);	//xTaskCreatePinnedToCore
 	
 	ESP_LOGD(TAG, "Initializing done" );
