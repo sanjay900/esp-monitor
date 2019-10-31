@@ -41,14 +41,19 @@ OTA update				- 10 -
 
 
 WESP32:
+--------------------------------------------
 
 I2C1 SCL - IO5
 
 I2C1 SDA - IO33
 
+STH31
+--------------------------------------------
 
 STH31 I2C address = 0x44
 
+D7s
+--------------------------------------------
 
 D7s I2C address = 0x55
 
@@ -64,6 +69,7 @@ https://github.com/alessandro1105/D7S_Arduino_Library
 
 https://www.14core.com/wiring-d7s-seismic-earthquake-detection-mapping-intensity-vibration-sensor-on-microcontroller/
 
+--------------------------------------------
 
 Based on the template application to be used with [Espressif IoT Development Framework](https://github.com/espressif/esp-idf).
 
