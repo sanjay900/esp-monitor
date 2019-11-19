@@ -567,7 +567,7 @@ void app_main(void) {
 	if (sensor) {
 		ESP_LOGD(TAG, "Sensor Init OK" );
 		// Create a user task that uses the sensors.
-		xTaskCreate(sensor_read, "sensor_read", TASK_STACK_DEPTH, NULL, 2, 0);	//xTaskCreatePinnedToCore
+		xTaskCreatePinnedToCore(sensor_read, "sensor_read", TASK_STACK_DEPTH, NULL, 2,  NULL, 0);	//xTaskCreatePinnedToCore
 	}
 	else{
 		ESP_LOGE(TAG, "Sensor Init Failed" );
@@ -576,7 +576,7 @@ void app_main(void) {
 	
 	ESP_LOGD(TAG, "MQTT Initialize");
 	mqtt_app_start();
-	xTaskCreate(mqtt_send, "mqtt_send", TASK_STACK_DEPTH, NULL, 1, 0);	//xTaskCreatePinnedToCore
+	xTaskCreatePinnedToCore(mqtt_send, "mqtt_send", TASK_STACK_DEPTH, NULL, 1, NULL, 1);	//xTaskCreatePinnedToCore
 	
 	ESP_LOGD(TAG, "Initializing done" );
 }

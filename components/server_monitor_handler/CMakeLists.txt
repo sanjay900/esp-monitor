@@ -1,8 +1,6 @@
 
 
-idf_component_register(SRCS "server_monitor_handler.c"
-                    INCLUDE_DIRS "."
-					REQUIRES "esp_http_server" "spiffs")
+idf_component_register()
 					
 # Create a SPIFFS image from the contents of the 'spiffs_image' directory
 # that fits the partition named 'storage'. FLASH_IN_PROJECT indicates that
