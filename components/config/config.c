@@ -5,6 +5,7 @@
 #include "nvs_flash.h"
 #include "esp_spiffs.h"   
 static const char *TAG = "Environment Sensor - Config Handler";
+config_struct config_data;
 /** INIT NVS **/
 esp_err_t init_NVS(void){
     ESP_LOGD(TAG, "Initializing NVS");

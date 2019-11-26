@@ -14,5 +14,5 @@ typedef struct{
 	int log_days;
 } config_struct;
 
-static config_struct config_data;
+extern config_struct config_data;
 void init_config(void);
