@@ -13,6 +13,7 @@
         "esp_event_loop.h": "c",
         "tcpip_adapter.h": "c",
         "api.h": "c",
-        "esp_log.h": "c"
+        "esp_log.h": "c",
+        "net_handler.h": "c"
     }
 }

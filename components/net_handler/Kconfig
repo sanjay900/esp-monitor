@@ -1,0 +1,18 @@
+menu "Network Configuration"
+
+config ACTIVE_NETWORK_ADAPTOR
+    int
+    default 1 if ACTIVE_WIFI
+    default 2 if ACTIVE_ETHERNET
+    choice
+        prompt "Network Adaptor Type"
+        default ACTIVE_WIFI
+
+        config ACTIVE_WIFI
+            bool "Use WIFI"
+
+        config ACTIVE_ETHERNET
+            bool "Use Ethernet"
+    endchoice
+
+endmenu
