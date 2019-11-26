@@ -1,5 +1,5 @@
 #include "net_handler.h"
-static const char *TAG = "Environment Sensor";
+static const char *TAG = "Environment Sensor - Net Handler";
 
 static bool isConnected = 0;
 static int s_retry_num = 0;
