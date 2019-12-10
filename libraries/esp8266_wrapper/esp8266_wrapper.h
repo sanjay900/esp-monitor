@@ -81,6 +81,12 @@ void gpio_enable (gpio_num_t gpio, const gpio_mode_t mode);
 
 void i2c_init (int bus, gpio_num_t scl, gpio_num_t sda, uint32_t freq);
 
+int i2c_slave_write_16 (uint8_t bus, uint8_t addr, const uint16_t *reg, 
+                     uint8_t *data, uint32_t len);
+
+int i2c_slave_read_16 (uint8_t bus, uint8_t addr, const uint16_t *reg, 
+                    uint8_t *data, uint32_t len);
+
 int i2c_slave_write (uint8_t bus, uint8_t addr, const uint8_t *reg, 
                      uint8_t *data, uint32_t len);
 

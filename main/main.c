@@ -32,7 +32,6 @@ static const char *TAG = "Environment Sensor";
 	#define TASK_STACK_DEPTH 256	// user task stack depth for ESP8266
 #endif // ESP_PLATFORM
 
-
 #ifdef ACTIVE_SHT31
 	#include "sht3x.h"
 	

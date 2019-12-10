@@ -96,6 +96,54 @@ int i2c_slave_write (uint8_t bus, uint8_t addr, const uint8_t *reg,
     return err;
 }
 
+int i2c_slave_read_16 (uint8_t bus, uint8_t addr, const uint16_t *reg, 
+                    uint8_t *data, uint32_t len)
+{
+    if (len == 0) return true;
+
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    if (reg)
+    {
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, ( addr << 1 ) | I2C_MASTER_WRITE, true);
+        i2c_master_write_byte(cmd, *reg >> 8, true);
+        i2c_master_write_byte(cmd, *reg & 0xff, true);
+        if (!data)
+            i2c_master_stop(cmd);
+    }
+    if (data)
+    {
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, ( addr << 1 ) | I2C_MASTER_READ, true);
+        if (len > 1) i2c_master_read(cmd, data, len-1, I2C_ACK_VAL);
+        i2c_master_read_byte(cmd, data + len-1, I2C_NACK_VAL);
+        i2c_master_stop(cmd);
+    }
+    esp_err_t err = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_RATE_MS);
+    i2c_cmd_link_delete(cmd);
+
+    return err;
+}
+
+int i2c_slave_write_16 (uint8_t bus, uint8_t addr, const uint16_t *reg, 
+                     uint8_t *data, uint32_t len)
+{
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+    i2c_master_start(cmd);
+    i2c_master_write_byte(cmd, addr << 1 | I2C_MASTER_WRITE, true);
+    if (reg) {
+        i2c_master_write_byte(cmd, *reg >> 8, true);
+        i2c_master_write_byte(cmd, *reg & 0xff, true);
+    }
+    if (data)
+        i2c_master_write(cmd, data, len, true);
+    i2c_master_stop(cmd);
+    esp_err_t err = i2c_master_cmd_begin(bus, cmd, 1000 / portTICK_RATE_MS);
+    i2c_cmd_link_delete(cmd);
+    
+    return err;
+}
+
 int i2c_slave_read (uint8_t bus, uint8_t addr, const uint8_t *reg, 
                     uint8_t *data, uint32_t len)
 {
