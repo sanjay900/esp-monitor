@@ -10,38 +10,37 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base, int32_t ev
     switch (event_id) {
     case ETHERNET_EVENT_CONNECTED:
         esp_eth_ioctl(eth_handle, ETH_CMD_G_MAC_ADDR, mac_addr);
-        ESP_LOGD(TAG, "Ethernet Link Up");
-        ESP_LOGD(TAG, "Ethernet HW Addr %02x:%02x:%02x:%02x:%02x:%02x",
+        ESP_LOGI(TAG, "Ethernet Link Up");
+        ESP_LOGI(TAG, "Ethernet HW Addr %02x:%02x:%02x:%02x:%02x:%02x",
                  mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
         break;
     case ETHERNET_EVENT_DISCONNECTED:
 		isConnected = 0;
-        ESP_LOGD(TAG, "Ethernet Link Down");
+        ESP_LOGI(TAG, "Ethernet Link Down");
         break;
     case ETHERNET_EVENT_START:
-        ESP_LOGD(TAG, "Ethernet Started");
+        ESP_LOGI(TAG, "Ethernet Started");
         break;
     case ETHERNET_EVENT_STOP:
 		isConnected = 0;
-        ESP_LOGD(TAG, "Ethernet Stopped");
+        ESP_LOGI(TAG, "Ethernet Stopped");
         break;
     default:
         break;
     }
 }
-void init_adaptor(void) {
-    ESP_LOGD(TAG, "Initializing ETHERNET...");
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-    ESP_ERROR_CHECK(tcpip_adapter_set_default_eth_handlers());
+void init_adaptor(esp_netif_t *eth_netif) {
+    ESP_LOGI(TAG, "Initializing ETHERNET...");
     ESP_ERROR_CHECK(esp_event_handler_register(ETH_EVENT, ESP_EVENT_ANY_ID, &eth_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &got_ip_event_handler, NULL));
 
     eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG();
-	
+	mac_config.smi_mdc_gpio_num = 16;
+    mac_config.smi_mdio_gpio_num = 17;
 	eth_phy_config_t phy_config = ETH_PHY_DEFAULT_CONFIG();
 	/* Set the PHY address*/
 	phy_config.phy_addr = 0;
-	phy_config.phy_power_enable(false);
+    phy_config.reset_gpio_num = 5;
 	
     esp_eth_mac_t *mac = esp_eth_mac_new_esp32(&mac_config);
     esp_eth_phy_t *phy = esp_eth_phy_new_lan8720(&phy_config);
@@ -49,5 +48,9 @@ void init_adaptor(void) {
     esp_eth_config_t config = ETH_DEFAULT_CONFIG(mac, phy);
     esp_eth_handle_t eth_handle = NULL;
     ESP_ERROR_CHECK(esp_eth_driver_install(&config, &eth_handle));
-	ESP_LOGD(TAG, "ETHERNET initialized");
+    /* attach Ethernet driver to TCP/IP stack */
+    ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handle)));
+    /* start Ethernet driver state machine */
+    ESP_ERROR_CHECK(esp_eth_start(eth_handle));
+	ESP_LOGI(TAG, "ETHERNET initialized");
 }

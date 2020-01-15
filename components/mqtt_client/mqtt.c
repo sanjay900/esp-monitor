@@ -8,14 +8,11 @@ static const char *TAG = "Environment Sensor - MQTT Handler";
 static esp_mqtt_client_handle_t mqttClient;
 
 static bool mqttStatus = 0;
-static bool isConnected = 0;
 static char mqttTopic[30];
 static char humTopic[30];
 static char tempTopic[30];
 /** Event handler for MQTT events */
-static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data) {
-    ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%d", base, event_id);
-    esp_mqtt_event_handle_t event = event_data;    
+static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
 	// esp_mqtt_client_handle_t client = event->client;
     // int msg_id;
     // your_context_t *context = event->context;
@@ -49,9 +46,21 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             ESP_LOGI(TAG, "Other event id:%d", event->event_id);
             break;
     }
-    //return ESP_OK;
+    return ESP_OK;
 }
-
+void publish(float temperature, float humidity) {
+	char temperatureChar[64], humidityChar[64];
+	int msg_id;
+    //  TODO: we need a structure for a sensor here, and a function per sensor that gets messages to publish
+    sprintf(temperatureChar, "%f", temperature);
+    sprintf(humidityChar, "%f", humidity);
+    msg_id = esp_mqtt_client_publish(mqttClient, tempTopic, temperatureChar, 0,
+                                     1, 0);
+    ESP_LOGD(TAG, "sent publish successful, msg_id=%d", msg_id);
+    msg_id =
+        esp_mqtt_client_publish(mqttClient, humTopic, humidityChar, 0, 1, 0);
+    ESP_LOGD(TAG, "sent publish successful, msg_id=%d", msg_id);
+}
 void mqtt_send(void *pvParameters) {
 	char temperatureChar[64], humidityChar[64];
 	int msg_id;
@@ -69,7 +78,7 @@ void mqtt_send(void *pvParameters) {
 		}
 		else{
 			//reconnect
-			while(esp_mqtt_client_reconnect(mqttClient) != ESP_OK);
+			// while(esp_mqtt_client_reconnect(mqttClient) != ESP_OK);
 		}
 		
 		// Wait until 2 seconds (cycle time) are over.
@@ -81,12 +90,13 @@ void mqtt_send(void *pvParameters) {
 /** INIT MQTT **/
 static void mqtt_app_start(void)
 {
+    ESP_LOGI(TAG, "%s", config_data.mqtt_ip);
     esp_mqtt_client_config_t mqtt_cfg = {
         .uri = config_data.mqtt_ip,
+        .event_handle = mqtt_event_handler
     };
 
     mqttClient = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt_client_register_event(mqttClient, ESP_EVENT_ANY_ID, mqtt_event_handler, mqttClient);
     esp_mqtt_client_start(mqttClient);
 	strcpy(mqttTopic, config_data.name);
 	strcat(mqttTopic, "\\");

@@ -4,3 +4,4 @@
 	#define TASK_STACK_DEPTH 256	// user task stack depth for ESP8266
 #endif // ESP_PLATFORM
 void mqtt_init(void);
+void publish(float temperature, float humidity);

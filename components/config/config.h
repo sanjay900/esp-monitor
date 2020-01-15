@@ -9,7 +9,7 @@ typedef struct{
 	int alarm_treshold_min;
 	int alarm_treshold_max;
 	char esp32_ip[15];
-	char mqtt_ip[30];
+	char mqtt_ip[64];
 	int log_activ;
 	int log_days;
 } config_struct;

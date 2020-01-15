@@ -9,7 +9,7 @@
 #include "esp_event.h"
 #include "esp_log.h"
 
-#include "tcpip_adapter.h"
+#include "esp_netif.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
 #include "esp_eth.h"
@@ -20,11 +20,11 @@
 
 static const char *TAG = "Environment Sensor";
 
-#define ACTIVE_SCREEN	// OLED1306
-#define ACTIVE_WIFI		// WIFI
-//#define ACTIVE_ETHERNET	// ETHERNET
+// #define ACTIVE_SCREEN	// OLED1306
+// #define ACTIVE_WIFI		// WIFI
+#define ACTIVE_ETHERNET	// ETHERNET
 #define ACTIVE_SHT31	// Temperature/humidity sensor
-//#define ACTIVE_D7s		// Siesmic sensor
+#define ACTIVE_D7s		// Siesmic sensor
 
 #ifdef ESP_PLATFORM // ESP32 (ESP-IDF)
 	#define TASK_STACK_DEPTH 2048	// user task stack depth for ESP32
@@ -36,8 +36,8 @@ static const char *TAG = "Environment Sensor";
 	#include "sht3x.h"
 	
 	#define I2CSensor_BUS 0
-	#define I2CSensor_SCL_PIN 22
-	#define I2CSensor_SDA_PIN 21
+	#define I2CSensor_SCL_PIN 5
+	#define I2CSensor_SDA_PIN 33
 	#define I2CSensor_FREQ I2C_FREQ_100K
 	static sht3x_sensor_t *sensor_sht31; // sensor device data structure
 	static float temperature=-1;
@@ -110,15 +110,15 @@ void sensor_read(void *pvParameters) {
 	// or the duration returned from *sht3x_get_measurement_duration*).
 	vTaskDelay(sht3x_get_measurement_duration(sht3x_high));
 #endif // ACTIVE_SHT31
-
 	TickType_t last_wakeup = xTaskGetTickCount();
-
 	while (1) {
 #ifdef ACTIVE_SHT31
 		// Get the values and do something with them.
 		if (sht3x_get_results(sensor_sht31, &temperature, &humidity)){
+            //TODO: we need a structure for a sensor here, and a function per sensor that gets messages to publish
 			ESP_LOGI(TAG, "%.3f SHT3x Sensor: %.2f °C, %.2f %%\n",
 					(double)(clock() * 1000 / CLOCKS_PER_SEC), temperature, humidity);
+			publish(temperature, humidity);
 		} 
 		else {
 			ESP_LOGE(TAG, "sht31_readTempHum : failed");
@@ -135,28 +135,28 @@ void sensor_read(void *pvParameters) {
 void app_main(void) {
 	//vTaskDelay(1000);
 	
-	ESP_LOGD(TAG, "Initializing processes" );
-	ESP_LOGD(TAG, "IDF-Version" );
-	ESP_LOGD(TAG, "%s" , IDF_VER);
-	/*esp_log_level_set("*", ESP_LOG_INFO);
+	ESP_LOGI(TAG, "Initializing processes" );
+	ESP_LOGI(TAG, "IDF-Version" );
+	ESP_LOGI(TAG, "%s" , IDF_VER);
+	esp_log_level_set("*", ESP_LOG_INFO);
     esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
     esp_log_level_set("MQTT_EXAMPLE", ESP_LOG_VERBOSE);
     esp_log_level_set("TRANSPORT_TCP", ESP_LOG_VERBOSE);
     esp_log_level_set("TRANSPORT_SSL", ESP_LOG_VERBOSE);
     esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
-    esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);*/
+    esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
 	init_config();
 	//Coms
 	init_coms();
 	
 #ifdef ACTIVE_SCREEN
 	// Init Screen
-	ESP_LOGD(TAG, "Screen Initialize" );
+	ESP_LOGI(TAG, "Screen Initialize" );
 	if( SSD1306_I2CMasterInitDefault( ) == true ){
 		if( SSD1306_I2CMasterAttachDisplayDefault( &I2CDisplay, I2CDisplayWidth, I2CDisplayHeight, I2CDisplayAddress, I2CResetPin ) == true ){
 			SSD1306_Clear(&I2CDisplay, SSD_COLOR_BLACK);
 			SSD1306_SetFont(&I2CDisplay, &Font_droid_sans_fallback_11x13);
-			ESP_LOGD(TAG, "Screen Init OK" );
+			ESP_LOGI(TAG, "Screen Init OK" );
 			SSD1306_FontDrawAnchoredString( &I2CDisplay, TextAnchor_NorthWest, "Waiting for connection...", SSD_COLOR_WHITE );
 			SSD1306_Update( &I2CDisplay );
 		}
@@ -172,7 +172,8 @@ void app_main(void) {
 	//Wait for connection
 	ESP_LOGI(TAG, "Waiting for connection before continuing to init" );
 	while(isConnected == 0){
-		ESP_LOGI(TAG, "." );
+		// ESP_LOGI(TAG, "." ); 
+		vTaskDelay(10);
 	};
 
     ESP_ERROR_CHECK(start_server());
@@ -184,7 +185,7 @@ void app_main(void) {
 #endif // ACTIVE_SCREEN	
 
 	// Sensor
-	ESP_LOGD(TAG, "Sensor Initialize");
+	ESP_LOGI(TAG, "Sensor Initialize");
 	// Create the sensor
 	esp_err_t sensor = ESP_FAIL;
 #ifdef ACTIVE_SHT31
@@ -194,7 +195,7 @@ void app_main(void) {
 #endif // ACTIVE_SHT31	
 	
 	if (sensor) {
-		ESP_LOGD(TAG, "Sensor Init OK" );
+		ESP_LOGI(TAG, "Sensor Init OK" );
 		// Create a user task that uses the sensors.
 		xTaskCreatePinnedToCore(sensor_read, "sensor_read", TASK_STACK_DEPTH, NULL, 2,  NULL, 0);	//xTaskCreatePinnedToCore
 	}
@@ -203,8 +204,8 @@ void app_main(void) {
 	}
 	
 	
-	ESP_LOGD(TAG, "MQTT Initialize");
+	ESP_LOGI(TAG, "MQTT Initialize");
 	mqtt_init();
 	
-	ESP_LOGD(TAG, "Initializing done" );
+	ESP_LOGI(TAG, "Initializing done" );
 }

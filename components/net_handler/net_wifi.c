@@ -17,7 +17,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t e
     }
 }
 
-void init_adaptor(void) {
+void init_adaptor(esp_netif_t *eth_netif) {
     //Init WIFI
 	ESP_LOGD(TAG, "Initializing WIFI...");
 
