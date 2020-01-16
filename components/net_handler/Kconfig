@@ -1,12 +1,10 @@
 menu "Network Configuration"
-
-config ACTIVE_NETWORK_ADAPTOR
-    int
-    default 1 if ACTIVE_WIFI
-    default 2 if ACTIVE_ETHERNET
-    choice
-        prompt "Network Adaptor Type"
+    choice ACTIVE_NETWORK_ADAPTOR
+        prompt "Connect using"
         default ACTIVE_WIFI
+        help
+            Protocol examples can use Wi-Fi or Ethernet to connect to the network.
+            Choose which interface to use.
 
         config ACTIVE_WIFI
             bool "Use WIFI"
@@ -15,4 +13,18 @@ config ACTIVE_NETWORK_ADAPTOR
             bool "Use Ethernet"
     endchoice
 
+    if ACTIVE_WIFI
+        config ESP_WIFI_SSID
+            string "WiFi SSID"
+            default "myssid"
+            help
+                SSID (network name) for the example to connect to.
+
+        config ESP_WIFI_PASSWORD
+            string "WiFi Password"
+            default "mypassword"
+            help
+                WiFi password (WPA or WPA2) for the example to use.
+                Can be left blank if the network has no security set.
+    endif
 endmenu

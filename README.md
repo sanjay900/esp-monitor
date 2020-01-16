@@ -8,15 +8,15 @@
 | Ethernet               | 4        |          | Y    | Y      |
 | SHT31                  | 0        |          | Y    | Y      |
 | D7s                    | 10       |          |      |        |
-| Sensor API             | 10       |          |      |        |
+| Sensor API             | 10       |          | Y    | Y      |
 | MQTT init              | 2        |          | Y    | Y      |
 | MQTT used              | 3        |          | Y    | Y      |
 | MQTT secured           | 10       |          |      |        |
 | SPIFFS                 | 0        |          | Y    | Y      |
-| LORA                   | 0        |          | Y    | Y      |
+| LORA                   | 0        |          |      |        |
 | Read local config      | 0        |          | Y    | Y      |
 | Save local config      | 10       |          |      |        |
-| Use local config       | 10       |          |      |        |
+| Use local config       | 10       |          | Y    | Y      |
 | WebServer settings     | 10       |          |      |        |
 | WebServer/remote log   | 10       |          |      |        |
 | Webserver display      | 10       |          |      |        |

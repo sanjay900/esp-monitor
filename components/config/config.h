@@ -1,3 +1,4 @@
+#pragma once
 typedef struct{
 	char f_version[4];
 	char h_version[4];

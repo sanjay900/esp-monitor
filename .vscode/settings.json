@@ -1,0 +1,17 @@
+{
+    "files.associations": {
+        "d7s.h": "c",
+        "esp8266_wrapper.h": "c",
+        "array": "c",
+        "vector": "c",
+        "xstring": "c",
+        "xutility": "c",
+        "ssd1306_font.h": "c",
+        "future": "c",
+        "system_error": "c",
+        "config.h": "c",
+        "mqtt.h": "c",
+        "sensor.h": "c",
+        "i2c.h": "c"
+    }
+}

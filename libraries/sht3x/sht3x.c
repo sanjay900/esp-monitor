@@ -39,12 +39,16 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * Modified by sanjay govind
  */
 
 #include <string.h>
 #include <stdlib.h>
 
 #include "sht3x.h"
+#include "esp_log.h"
+#include "config.h"
 
 #define SHT3x_STATUS_CMD               0xF32D
 #define SHT3x_CLEAR_STATUS_CMD         0x3041
@@ -112,7 +116,23 @@ bool sht3x_init_driver()
     return true;
 }
 
-
+void sht3x_tick(sensor_t* sensor) {
+    sht3x_sensor_t* dev = (sht3x_sensor_t*)sensor;
+    static float temperature=-1;
+	static float humidity=-1;
+    if (sht3x_get_results(dev, &temperature, &humidity)){
+        message_t msg;
+        sprintf(msg.topic, "%s/%s/sht3x/temperature", config_data.location, config_data.name);
+        sprintf(msg.message, "%.2f", temperature);
+        xQueueSend(sensor->messages, &msg, (TickType_t)0);
+        sprintf(msg.topic, "%s/%s/sht3x/humidity", config_data.location, config_data.name);
+        sprintf(msg.message, "%.2f", humidity);
+        xQueueSend(sensor->messages, &msg, (TickType_t)0);
+    } 
+    else {
+        ESP_LOGE("SHT3x", "sht31_readTempHum : failed");
+    }
+}
 sht3x_sensor_t* sht3x_init_sensor(uint8_t bus, uint8_t addr)
 {
     sht3x_sensor_t* dev;
@@ -121,8 +141,10 @@ sht3x_sensor_t* sht3x_init_sensor(uint8_t bus, uint8_t addr)
         return NULL;
     
     // inititalize sensor data structure
-    dev->bus  = bus;
-    dev->addr = addr;
+    dev->sensor.bus  = bus;
+    dev->sensor.addr = addr;
+    dev->sensor.type = SENSOR_SHT3X;
+    dev->sensor.tick = sht3x_tick;
     dev->mode = sht3x_single_shot;
     dev->meas_start_time = 0;
     dev->meas_started = false;
@@ -145,6 +167,14 @@ sht3x_sensor_t* sht3x_init_sensor(uint8_t bus, uint8_t addr)
     }
     
     debug_dev ("sensor initialized", __FUNCTION__, dev);
+    
+	// Start periodic measurements with 1 measurement per second.
+	sht3x_start_measurement(dev, sht3x_periodic_1mps, sht3x_high);
+
+	// Wait until first measurement is ready (constant time of at least 30 ms
+	// or the duration returned from *sht3x_get_measurement_duration*).
+	vTaskDelay(sht3x_get_measurement_duration(sht3x_high));
+    register_sensor((sensor_t*)dev);
     return dev;
 }
 
@@ -314,7 +344,7 @@ static bool sht3x_send_command(sht3x_sensor_t* dev, uint16_t cmd)
 
     debug_dev ("send command MSB=%02x LSB=%02x", __FUNCTION__, dev, data[0], data[1]);
 
-    int err = i2c_slave_write(dev->bus, dev->addr, 0, data, 2);
+    int err = i2c_slave_write(dev->sensor.bus, dev->sensor.addr, 0, 1, data, 2);
   
     if (err)
     {
@@ -329,7 +359,7 @@ static bool sht3x_send_command(sht3x_sensor_t* dev, uint16_t cmd)
 static bool sht3x_read_data(sht3x_sensor_t* dev, uint8_t *data,  uint32_t len)
 {
     if (!dev) return false;
-    int err = i2c_slave_read(dev->bus, dev->addr, 0, data, len);
+    int err = i2c_slave_read(dev->sensor.bus, dev->sensor.addr, 0, 1, data, len);
         
     if (err)
     {

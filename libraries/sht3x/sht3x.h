@@ -50,7 +50,7 @@
 
 #include "stdint.h"
 #include "stdbool.h"
-
+#include "sensor.h"
 #include "sht3x_platform.h"
 
 #ifdef __cplusplus
@@ -121,11 +121,9 @@ typedef enum {
  * @brief 	SHT3x sensor device data structure type
  */
 typedef struct {
-
-    uint32_t        error_code;      // combined error codes
+    sensor_t sensor;
     
-    uint8_t         bus;             // I2C bus at which sensor is connected
-    uint8_t         addr;            // I2C slave address of the sensor
+    uint32_t        error_code;      // combined error codes
     
     sht3x_mode_t    mode;            // used measurement mode
     sht3x_repeat_t  repeatability;   // used repeatability

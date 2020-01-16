@@ -59,68 +59,67 @@ typedef struct d7s_sensor_t {
   uint8_t int2;
 } d7s_sensor_t;
 
-void init(d7s_sensor_t *sensor);
-void begin(d7s_sensor_t *d7s);
+d7s_sensor_t* d7s_init_sensor(uint8_t bus, uint8_t addr);
 //--- STATUS ---
-d7s_status getState(d7s_sensor_t *d7s);         // return the currect state
-d7s_axis_state getAxisInUse(d7s_sensor_t *d7s); // return the current axis in
+d7s_status d7s_getState(d7s_sensor_t *d7s);         // return the currect state
+d7s_axis_state d7s_getAxisInUse(d7s_sensor_t *d7s); // return the current axis in
                                                 // use
 
 //--- SETTINGS ---
-void setThreshold(d7s_sensor_t *d7s,
+void d7s_setThreshold(d7s_sensor_t *d7s,
                   d7s_threshold threshold); // change the threshold in use
-void setAxis(d7s_sensor_t *d7s,
+void d7s_setAxis(d7s_sensor_t *d7s,
              d7s_axis_settings axisMode); // change the axis selection mode
 
 //--- LASTEST DATA ---
-float getLastestSI(
+float d7s_getLastestSI(
     d7s_sensor_t *d7s,
     uint8_t index); // get the lastest SI at specified index (up to 5) [m/s]
-float getLastestPGA(
+float d7s_getLastestPGA(
     d7s_sensor_t *d7s,
     uint8_t index); // get the lastest PGA at specified index (up to 5) [m/s^2]
-float getLastestTemperature(
+float d7s_getLastestTemperature(
     d7s_sensor_t *d7s, uint8_t index); // get the lastest Temperature at
                                        // specified index (up to 5) [Celsius]
 
 //--- RANKED DATA ---
-float getRankedSI(d7s_sensor_t *d7s,
+float d7s_getRankedSI(d7s_sensor_t *d7s,
                   uint8_t position); // get the ranked SI at specified position
                                      // (up to 5) [m/s]
-float getRankedPGA(d7s_sensor_t *d7s,
+float d7s_getRankedPGA(d7s_sensor_t *d7s,
                    uint8_t position); // get the ranked PGA at specified
                                       // position (up to 5) [m/s^2]
-float getRankedTemperature(
+float d7s_getRankedTemperature(
     d7s_sensor_t *d7s,
     uint8_t position); // get the ranked Temperature at specified position (up
                        // to 5) [Celsius]
 
 //--- INSTANTANEUS DATA ---
-float getInstantaneusSI(
+float d7s_getInstantaneusSI(
     d7s_sensor_t *d7s); // get instantaneus SI (during an earthquake) [m/s]
-float getInstantaneusPGA(
+float d7s_getInstantaneusPGA(
     d7s_sensor_t *d7s); // get instantaneus PGA (during an earthquake) [m/s^2]
 
 //--- CLEAR MEMORY ---
-void clearEarthquakeData(
+void d7s_clearEarthquakeData(
     d7s_sensor_t *d7s); // delete both the lastest data and the ranked data
-void clearInstallationData(d7s_sensor_t *d7s);  // delete initializzazion data
-void clearLastestOffsetData(d7s_sensor_t *d7s); // delete offset data
-void clearSelftestData(d7s_sensor_t *d7s);      // delete selftest data
-void clearAllData(d7s_sensor_t *d7s);           // delete all data
+void d7s_clearInstallationData(d7s_sensor_t *d7s);  // delete initializzazion data
+void d7s_clearLastestOffsetData(d7s_sensor_t *d7s); // delete offset data
+void d7s_clearSelftestData(d7s_sensor_t *d7s);      // delete selftest data
+void d7s_clearAllData(d7s_sensor_t *d7s);           // delete all data
 
 //--- INITIALIZATION ---
-void initialize(d7s_sensor_t *d7s); // initialize the d7s (start the initial
+void d7s_initialize(d7s_sensor_t *d7s); // initialize the d7s (start the initial
                                     // installation mode)
 
 //--- SELFTEST ---
-void selftest(d7s_sensor_t *d7s); // trigger self-diagnostic test
-d7s_mode_status getSelftestResult(
+void d7s_selftest(d7s_sensor_t *d7s); // trigger self-diagnostic test
+d7s_mode_status d7s_getSelftestResult(
     d7s_sensor_t *d7s); // return the result of self-diagnostic test (OK/ERROR)
 
 //--- OFFSET ACQUISITION ---
-void acquireOffset(d7s_sensor_t *d7s); // trigger offset acquisition
-d7s_mode_status getAcquireOffsetResult(
+void d7s_acquireOffset(d7s_sensor_t *d7s); // trigger offset acquisition
+d7s_mode_status d7s_getAcquireOffsetResult(
     d7s_sensor_t
         *d7s); // return the result of offset acquisition test (OK/ERROR)
 
@@ -128,16 +127,16 @@ d7s_mode_status getAcquireOffsetResult(
 // after each earthquakes it's important to reset the events calling
 // resetEvents() to prevent polluting the new data with the old one
 uint8_t
-isInCollapse(d7s_sensor_t *d7s); // return true if the collapse condition is met
+d7s_isInCollapse(d7s_sensor_t *d7s); // return true if the collapse condition is met
                                  // (it's the sencond bit of _events)
-uint8_t isInShutoff(d7s_sensor_t *d7s); // return true if the shutoff condition
+uint8_t d7s_isInShutoff(d7s_sensor_t *d7s); // return true if the shutoff condition
                                         // is met (it's the first bit of _events)
-void resetEvents(d7s_sensor_t *d7s); // reset shutoff/collapse events
+void d7s_resetEvents(d7s_sensor_t *d7s); // reset shutoff/collapse events
 
 //--- EARTHQUAKE EVENT ---
-uint8_t isEarthquakeOccuring(
+uint8_t d7s_isEarthquakeOccuring(
     d7s_sensor_t *d7s); // return true if an earthquake is occuring
 
 //--- READY STATE ---
-uint8_t isReady(d7s_sensor_t *d7s);
-void readEvents(d7s_sensor_t *sensor);
+uint8_t d7s_isReady(d7s_sensor_t *d7s);
+void d7s_readEvents(d7s_sensor_t *sensor);
