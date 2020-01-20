@@ -2,8 +2,25 @@
 #include "esp_log.h"
 #include "esp8266_wrapper.h"
 
+void d7s_tick(sensor_t* sensor) {
+    static message_t msg;
+    static d7s_sensor_t* dev=NULL;
+    dev = (d7s_sensor_t*)sensor;
+    static float temperature=-1;
+	  static float iPGA=-1;
+    temperature = d7s_getLastestTemperature(dev,0);
+    iPGA = d7s_getInstantaneusPGA(dev);
+    sprintf(msg.topic, "%s/%s/d7s/temperature", config_data.location, config_data.name);
+    sprintf(msg.message, "%.2f", temperature);
+    xQueueSend(sensor->messages, &msg, (TickType_t)0);
+    sprintf(msg.topic, "%s/%s/d7s/instantaneusPGA", config_data.location, config_data.name);
+    sprintf(msg.message, "%.2f", iPGA);
+    xQueueSend(sensor->messages, &msg, (TickType_t)0);
+}
+
 d7s_sensor_t* d7s_init_sensor(uint8_t bus, uint8_t addr)
 {
+	  ESP_LOGI("D7S", "d7s Initialize");
     d7s_sensor_t* dev;
 
     if ((dev = malloc (sizeof(d7s_sensor_t))) == NULL)
@@ -13,6 +30,7 @@ d7s_sensor_t* d7s_init_sensor(uint8_t bus, uint8_t addr)
     dev->sensor.bus  = bus;
     dev->sensor.addr = addr;
     dev->sensor.type = SENSOR_D7S;
+    dev->sensor.tick = d7s_tick;
     dev->_events = 0;
     while (!d7s_isReady(dev)) {
       vTaskDelay(500/ portTICK_PERIOD_MS);

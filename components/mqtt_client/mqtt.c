@@ -43,13 +43,12 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
     return ESP_OK;
 }
 void mqtt_send(void *pvParameters) {
-	int msg_id;
 	TickType_t last_wakeup = xTaskGetTickCount();
     message_t msg;
 	while (1) {
         for (uint8_t i =0; i < current_sensor; i++) {
             while (xQueueReceive(sensors[i]->messages, &msg, (TickType_t)0)) {
-                msg_id = esp_mqtt_client_publish(mqttClient, msg.topic, msg.message, 0, 1, 0);
+                esp_mqtt_client_publish(mqttClient, msg.topic, msg.message, 0, 1, 0);
             }
         }		
 		// Wait until 2 seconds (cycle time) are over.

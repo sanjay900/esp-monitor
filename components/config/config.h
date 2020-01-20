@@ -5,7 +5,8 @@ typedef struct{
 	int id;
 	char name[20];
 	char location[20];
-	char sensor_type[4];
+	char sensors[10][4];
+	int sensor_count;
 	int refresh_rate;
 	int alarm_treshold_min;
 	int alarm_treshold_max;

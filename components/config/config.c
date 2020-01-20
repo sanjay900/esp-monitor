@@ -96,7 +96,15 @@ static esp_err_t load_config(void){
 	config_data.id = atoi(extract_between(file_buf, "id=", ";"));
 	strcpy(config_data.name, extract_between(file_buf, "name=", ";"));
 	strcpy(config_data.location, extract_between(file_buf, "location=", ";"));
-	strcpy(config_data.sensor_type, extract_between(file_buf, "sensor_type=", ";"));
+	char sensors[sizeof(config_data.sensors)];
+	strcpy(sensors, extract_between(file_buf, "sensors=", ";"));
+	char *token;
+	token = strtok(sensors, ",");
+	while (token != NULL) {
+		ESP_LOGI(TAG, "Reading: %d -> %s", config_data.sensor_count, token);
+		strcpy(config_data.sensors[config_data.sensor_count++], token);
+		token = strtok(NULL, ",");
+	}
 	config_data.refresh_rate = atoi(extract_between(file_buf, "refresh_rate=", ";"));
 	config_data.alarm_treshold_min = atoi(extract_between(file_buf, "alarm_treshold_min=", ";"));
 	config_data.alarm_treshold_max = atoi(extract_between(file_buf, "alarm_treshold_max=", ";"));

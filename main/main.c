@@ -20,28 +20,10 @@
 #include "driver/i2c.h"
 #include "sensor.h"
 #include "sht3x.h"
+#include "server_monitor_handler.h"
+#include "d7s.h"
 
 static const char *TAG = "Environment Sensor";
-
-
-
-
-/* -- Declaration --------------------------------------------------- */
-esp_err_t start_server(void);
-static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data);
-
-
-/* -- Events Handlers --------------------------------------------------- */
-
-/** Event handler */
-static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data){
-
-}
-
-
-
-
-
 /* -- MAIN --------------------------------------------------- */
 
 void app_main(void) {
@@ -71,14 +53,19 @@ void app_main(void) {
     ESP_ERROR_CHECK(start_server());
 
 	// Sensor
-	ESP_LOGI(TAG, "Sensor Initialize");
+	ESP_LOGI(TAG, "Sensor Initialize, %d", config_data.sensor_count);
+	i2c_init(I2CSensor_BUS, I2CSensor_SCL_PIN, I2CSensor_SDA_PIN, I2CSensor_FREQ);
+	for (int i = 0; i < config_data.sensor_count; i++) {
+		ESP_LOGI(TAG, "Sensor %s Init", config_data.sensors[i]);
+		if (strcmp(config_data.sensors[i], "TH") == 0) {
+			sht3x_init_sensor(I2CSensor_BUS, SHT3x_ADDR_1);
+		}
+		if (strcmp(config_data.sensors[i], "SI") == 0) {
+			d7s_init_sensor(I2CSensor_BUS, D7S_ADDRESS);
+		}
+	}
 	init_sensors();
-// #ifdef ACTIVE_SHT31
-	sht3x_init_sensor(I2CSensor_BUS, SHT3x_ADDR_1);
-// #endif // ACTIVE_SHT31	
-#ifdef ACTIVE_D7s
-	d7s_init_sensor(I2CSensor_BUS, D7S_ADDRESS);
-#endif // ACTIVE_SHT31
+
 	
 	ESP_LOGI(TAG, "MQTT Initialize");
 	mqtt_init();

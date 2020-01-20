@@ -117,11 +117,12 @@ bool sht3x_init_driver()
 }
 
 void sht3x_tick(sensor_t* sensor) {
-    sht3x_sensor_t* dev = (sht3x_sensor_t*)sensor;
+    static message_t msg;
+    static sht3x_sensor_t* dev=NULL;
+    dev = (sht3x_sensor_t*)sensor;
     static float temperature=-1;
 	static float humidity=-1;
     if (sht3x_get_results(dev, &temperature, &humidity)){
-        message_t msg;
         sprintf(msg.topic, "%s/%s/sht3x/temperature", config_data.location, config_data.name);
         sprintf(msg.message, "%.2f", temperature);
         xQueueSend(sensor->messages, &msg, (TickType_t)0);
@@ -135,6 +136,7 @@ void sht3x_tick(sensor_t* sensor) {
 }
 sht3x_sensor_t* sht3x_init_sensor(uint8_t bus, uint8_t addr)
 {
+	ESP_LOGI("SHT3x", "SHT3x Initialize");
     sht3x_sensor_t* dev;
 
     if ((dev = malloc (sizeof(sht3x_sensor_t))) == NULL)

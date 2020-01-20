@@ -12,6 +12,8 @@
         "config.h": "c",
         "mqtt.h": "c",
         "sensor.h": "c",
-        "i2c.h": "c"
+        "i2c.h": "c",
+        "sht3x.h": "c",
+        "esp_event.h": "c"
     }
 }
