@@ -33,6 +33,6 @@ typedef struct sensor_t {
 #define I2CSensor_SDA_PIN 33
 #define I2CSensor_FREQ I2C_FREQ_400K
 extern uint8_t current_sensor;
-void init_sensors(void);
+void init_sensor_read_task(void);
 void register_sensor(sensor_t* sensor);
 extern sensor_t* sensors[SENSOR_COUNT];

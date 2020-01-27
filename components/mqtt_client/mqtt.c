@@ -52,7 +52,7 @@ void mqtt_send(void *pvParameters) {
             }
         }		
 		// Wait until 2 seconds (cycle time) are over.
-		vTaskDelayUntil(&last_wakeup, 500 / portTICK_PERIOD_MS);
+		vTaskDelayUntil(&last_wakeup, config_data.refresh_rate / portTICK_PERIOD_MS);
 	}
 
 }

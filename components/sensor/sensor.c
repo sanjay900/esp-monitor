@@ -16,6 +16,6 @@ void sensor_read(void *pvParameters) {
 		vTaskDelayUntil(&last_wakeup, config_data.refresh_rate / portTICK_PERIOD_MS);
 	}
 }
-void init_sensors() {
+void init_sensor_read_task() {
 	xTaskCreatePinnedToCore(sensor_read, "SENSOR_READ_TASK", TASK_STACK_DEPTH * 2, NULL, 2,  NULL, 0);	//xTaskCreatePinnedToCore
 }

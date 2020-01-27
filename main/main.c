@@ -25,10 +25,25 @@
 
 static const char *TAG = "Environment Sensor";
 /* -- MAIN --------------------------------------------------- */
+void initialise_sensors(void) {
+	ESP_LOGI(TAG, "Sensor Initialize, %d", config_data.sensor_count);
+	// Init i2c
+	i2c_init(I2CSensor_BUS, I2CSensor_SCL_PIN, I2CSensor_SDA_PIN, I2CSensor_FREQ);
+	// Loop through sensors and initialise
+	for (int i = 0; i < config_data.sensor_count; i++) {
+		ESP_LOGI(TAG, "Sensor %s Init", config_data.sensors[i]);
+		if (strcmp(config_data.sensors[i], "TH") == 0) {
+			sht3x_init_sensor(I2CSensor_BUS, SHT3x_ADDR_1);
+		}
+		if (strcmp(config_data.sensors[i], "SI") == 0) {
+			d7s_init_sensor(I2CSensor_BUS, D7S_ADDRESS);
+		}
+	}
+	// Initialise sensor reading task 
+	init_sensor_read_task();
 
+}
 void app_main(void) {
-	//vTaskDelay(1000);
-	
 	ESP_LOGI(TAG, "Initializing processes" );
 	ESP_LOGI(TAG, "IDF-Version" );
 	ESP_LOGI(TAG, "%s" , IDF_VER);
@@ -52,20 +67,7 @@ void app_main(void) {
 
     ESP_ERROR_CHECK(start_server());
 
-	// Sensor
-	ESP_LOGI(TAG, "Sensor Initialize, %d", config_data.sensor_count);
-	i2c_init(I2CSensor_BUS, I2CSensor_SCL_PIN, I2CSensor_SDA_PIN, I2CSensor_FREQ);
-	for (int i = 0; i < config_data.sensor_count; i++) {
-		ESP_LOGI(TAG, "Sensor %s Init", config_data.sensors[i]);
-		if (strcmp(config_data.sensors[i], "TH") == 0) {
-			sht3x_init_sensor(I2CSensor_BUS, SHT3x_ADDR_1);
-		}
-		if (strcmp(config_data.sensors[i], "SI") == 0) {
-			d7s_init_sensor(I2CSensor_BUS, D7S_ADDRESS);
-		}
-	}
-	init_sensors();
-
+	initialise_sensors();
 	
 	ESP_LOGI(TAG, "MQTT Initialize");
 	mqtt_init();
