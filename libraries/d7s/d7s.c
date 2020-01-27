@@ -36,6 +36,7 @@ d7s_sensor_t* d7s_init_sensor(uint8_t bus, uint8_t addr)
       vTaskDelay(500/ portTICK_PERIOD_MS);
     }
     d7s_setAxis(dev, SWITCH_AT_INSTALLATION);
+    vTaskDelay(500/ portTICK_PERIOD_MS);
     d7s_initialize(dev);
     
     while (!d7s_isReady(dev)) {
@@ -48,8 +49,7 @@ d7s_sensor_t* d7s_init_sensor(uint8_t bus, uint8_t addr)
 uint8_t d7s_read8bit(d7s_sensor_t *sensor, uint16_t reg) {
   uint8_t regA[2] = { reg >> 8, reg & 0xff };
   uint8_t data[2];
-  int err = i2c_slave_read(sensor->sensor.bus, sensor->sensor.addr, regA, 2, data, 1);
-  ESP_LOGI("D7S", "d7s_read8bit %s (%d, %x) -> %x, %x", esp_err_to_name(err), sensor->sensor.bus, sensor->sensor.addr, reg, data[0]);
+  i2c_slave_read(sensor->sensor.bus, sensor->sensor.addr, regA, 2, data, 1);
   return data[0];
 }
 
@@ -57,22 +57,19 @@ uint16_t d7s_read16bit(d7s_sensor_t *sensor, uint16_t reg) {
   uint8_t regA[2] = { reg >> 8, reg & 0xff };
   uint8_t data[2];
   int err = i2c_slave_read(sensor->sensor.bus, sensor->sensor.addr, regA, 2, data, 2);
-  ESP_LOGI("D7S", "d7s_read16bit %s (%d, %x) -> %x, %x (%x, %x)", esp_err_to_name(err), sensor->sensor.bus, sensor->sensor.addr, reg, (data[0] << 8) | data[1], data[0], data[1]);
   return (data[0] << 8) | data[1];
 }
 
 
 void d7s_write8bit(d7s_sensor_t *sensor, uint16_t reg, uint8_t data) {
   uint8_t regA[2] = { reg >> 8, reg & 0xff };
-  int err = i2c_slave_write(sensor->sensor.bus, sensor->sensor.addr, regA, 2, &data, 1);
-  ESP_LOGI("D7S", "d7s_write8bit %s (%d, %x) -> %x, %x", esp_err_to_name(err), sensor->sensor.bus, sensor->sensor.addr, reg, data);
+  i2c_slave_write(sensor->sensor.bus, sensor->sensor.addr, regA, 2, &data, 1);
 }
 
 void d7s_write16bit(d7s_sensor_t *sensor, uint16_t reg, uint16_t data) {
   uint8_t regA[2] = { reg >> 8, reg & 0xff };
   uint8_t dataA[2] = { data >> 8, data & 0xff };
-  int err = i2c_slave_write(sensor->sensor.bus, sensor->sensor.addr, regA, 2, dataA, 2);
-  ESP_LOGI("D7S", "d7s_write16bit %s (%d, %x) -> %x, %x", esp_err_to_name(err), sensor->sensor.bus, sensor->sensor.addr, reg, data);
+  i2c_slave_write(sensor->sensor.bus, sensor->sensor.addr, regA, 2, dataA, 2);
 }
 
 //--- STATUS ---

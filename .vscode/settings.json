@@ -14,6 +14,9 @@
         "sensor.h": "c",
         "i2c.h": "c",
         "sht3x.h": "c",
-        "esp_event.h": "c"
+        "esp_event.h": "c",
+        "*.tcc": "cpp",
+        "*.ipp": "cpp",
+        "ostream": "cpp"
     }
 }
