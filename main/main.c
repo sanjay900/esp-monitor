@@ -20,9 +20,35 @@
 #include "driver/i2c.h"
 #include "sensor.h"
 #include "sht3x.h"
-#include "server_monitor_handler.h"
 #include "d7s.h"
+#include <libesphttpd/esp.h>
+#include "libesphttpd/httpd.h"
+#include "espfs.h"
+#include "espfs_image.h"
+#include "libesphttpd/httpd-espfs.h"
+#include "libesphttpd/cgiwifi.h"
+#include "libesphttpd/cgiflash.h"
+#include "libesphttpd/auth.h"
+#include "libesphttpd/captdns.h"
+#include "libesphttpd/cgiwebsocket.h"
+#include "libesphttpd/httpd-freertos.h"
+#include "libesphttpd/route.h"
 
+#define I2CSensor_BUS 0
+#define I2CSensor_SCL_PIN 5
+#define I2CSensor_SDA_PIN 33
+#define I2CSensor_FREQ I2C_FREQ_400K
+#define LISTEN_PORT     80u
+#define MAX_CONNECTIONS 32u
+
+static char connectionMemory[sizeof(RtosConnType) * MAX_CONNECTIONS];
+static HttpdFreertosInstance httpdFreertosInstance;
+
+const HttpdBuiltInUrl builtInUrls[]={
+	ROUTE_REDIRECT("/", "/index.html"),
+	ROUTE_FILESYSTEM(),
+	ROUTE_END()
+};
 static const char *TAG = "Environment Sensor";
 /* -- MAIN --------------------------------------------------- */
 void initialise_sensors(void) {
@@ -54,7 +80,7 @@ void app_main(void) {
     esp_log_level_set("TRANSPORT_SSL", ESP_LOG_VERBOSE);
     esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
     esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
-	init_config();
+	// init_config();
 	//Coms
 	init_coms();
 	
@@ -64,13 +90,22 @@ void app_main(void) {
 		// ESP_LOGI(TAG, "." ); 
 		vTaskDelay(10);
 	};
-
-    ESP_ERROR_CHECK(start_server());
-
-	initialise_sensors();
+    EspFsConfig espfs_conf = {
+		.memAddr = espfs_image_bin,
+	};
+	EspFs* fs = espFsInit(&espfs_conf);
+    httpdRegisterEspfs(fs);
+	httpdFreertosInit(&httpdFreertosInstance,
+	                  builtInUrls,
+	                  LISTEN_PORT,
+	                  connectionMemory,
+	                  MAX_CONNECTIONS,
+	                  HTTPD_FLAG_NONE);
+	httpdFreertosStart(&httpdFreertosInstance);
+	// initialise_sensors();
 	
 	ESP_LOGI(TAG, "MQTT Initialize");
-	mqtt_init();
+	// mqtt_init();
 	
 	ESP_LOGI(TAG, "Initializing done" );
 }

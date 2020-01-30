@@ -1,10 +1,10 @@
 #include "sensor.h"
 #include "esp_log.h"
-sensor_t* sensors[SENSOR_COUNT];
+sensor_t* sensors[MAX_SENSOR_COUNT];
 uint8_t current_sensor;
 
 void register_sensor(sensor_t* sensor) {
-	sensor->messages = xQueueCreate(MESSAGE_COUNT, sizeof(message_t));
+	sensor->messages = xQueueCreate(MAX_MESSAGE_COUNT, sizeof(message_t));
     sensors[current_sensor++] = sensor;
 }
 void sensor_read(void *pvParameters) {
@@ -17,5 +17,5 @@ void sensor_read(void *pvParameters) {
 	}
 }
 void init_sensor_read_task() {
-	xTaskCreatePinnedToCore(sensor_read, "SENSOR_READ_TASK", TASK_STACK_DEPTH * 2, NULL, 2,  NULL, 0);	//xTaskCreatePinnedToCore
+	xTaskCreatePinnedToCore(sensor_read, "SENSOR_READ_TASK", 4096, NULL, 2,  NULL, 0);	//xTaskCreatePinnedToCore
 }

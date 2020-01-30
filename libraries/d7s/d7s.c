@@ -56,7 +56,7 @@ uint8_t d7s_read8bit(d7s_sensor_t *sensor, uint16_t reg) {
 uint16_t d7s_read16bit(d7s_sensor_t *sensor, uint16_t reg) {
   uint8_t regA[2] = { reg >> 8, reg & 0xff };
   uint8_t data[2];
-  int err = i2c_slave_read(sensor->sensor.bus, sensor->sensor.addr, regA, 2, data, 2);
+  i2c_slave_read(sensor->sensor.bus, sensor->sensor.addr, regA, 2, data, 2);
   return (data[0] << 8) | data[1];
 }
 

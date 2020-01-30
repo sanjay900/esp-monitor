@@ -71,5 +71,5 @@ static void mqtt_app_start(void)
 }
 void mqtt_init() {
 	mqtt_app_start();
-    xTaskCreatePinnedToCore(mqtt_send, "mqtt_send", TASK_STACK_DEPTH, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(mqtt_send, "mqtt_send", 8092, NULL, 1, NULL, 1);
 }

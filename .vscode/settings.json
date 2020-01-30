@@ -17,6 +17,14 @@
         "esp_event.h": "c",
         "*.tcc": "cpp",
         "*.ipp": "cpp",
-        "ostream": "cpp"
-    }
+        "ostream": "cpp",
+        "httpd.h": "c",
+        "cgiwebsocket.h": "c",
+        "server_monitor_handler.h": "c",
+        "httpd-espfs.h": "c",
+        "espfs.h": "c",
+        "espfsformat.h": "c",
+        "esp.h": "c"
+    },
+    "python.pythonPath": "C:\\Users\\sanjay.govind\\.espressif\\python_env\\idf4.1_py3.7_env\\Scripts\\python.exe"
 }

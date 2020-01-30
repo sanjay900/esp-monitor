@@ -171,7 +171,7 @@ sht3x_sensor_t* sht3x_init_sensor(uint8_t bus, uint8_t addr)
     debug_dev ("sensor initialized", __FUNCTION__, dev);
     
 	// Start periodic measurements with 1 measurement every 2 seconds.
-	sht3x_start_measurement(dev, sht3x_periodic_05mps, sht3x_high);
+	sht3x_start_measurement(dev, sht3x_periodic_1mps, sht3x_high);
 
 	// Wait until first measurement is ready (constant time of at least 30 ms
 	// or the duration returned from *sht3x_get_measurement_duration*).

@@ -99,19 +99,13 @@ int i2c_slave_read(uint8_t bus, uint8_t addr, uint8_t *reg, uint32_t regLen, uin
   if (reg) {
     i2c_master_start(cmd);
     i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
-    // d7s requires some delay in order for things to read correctly.
-    for (int i = 0; i < regLen; i++) {
-      i2c_master_write_byte(cmd, reg[i], true);
-      i2c_master_cmd_begin(bus, cmd, 100 / portTICK_RATE_MS);
-      i2c_cmd_link_delete(cmd);
-      cmd = i2c_cmd_link_create();
-      vTaskDelay(20);
-    }
+    i2c_master_write(cmd, reg, regLen, true);
     i2c_master_stop(cmd);
     i2c_master_cmd_begin(bus, cmd, 100 / portTICK_RATE_MS);
     i2c_cmd_link_delete(cmd);
     cmd = i2c_cmd_link_create();
-    vTaskDelay(20);
+    // This may be necessary.
+    // vTaskDelay(20);
   }
   if (data) {
     i2c_master_start(cmd);

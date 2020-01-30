@@ -1,26 +1,27 @@
 # ESP-IDF Sensor monitor module
 
-| task                   | priority | comments | done | tested |
-| ---------------------- | -------- | -------- | ---- | ------ |
-| OLED Screen            | 0        |          | Y    | Y      |
-| Wifi                   | 0        |          | Y    | Y      |
-| Wifi/BT local settings | 0        |          |      |        |
-| Ethernet               | 4        |          | Y    | Y      |
-| SHT31                  | 0        |          | Y    | Y      |
-| D7s                    | 10       |          |      |        |
-| Sensor API             | 10       |          | Y    | Y      |
-| MQTT init              | 2        |          | Y    | Y      |
-| MQTT used              | 3        |          | Y    | Y      |
-| MQTT secured           | 10       |          |      |        |
-| SPIFFS                 | 0        |          | Y    | Y      |
-| LORA                   | 0        |          |      |        |
-| Read local config      | 0        |          | Y    | Y      |
-| Save local config      | 10       |          |      |        |
-| Use local config       | 10       |          | Y    | Y      |
-| WebServer settings     | 10       |          |      |        |
-| WebServer/remote log   | 10       |          |      |        |
-| Webserver display      | 10       |          |      |        |
-| OTA update             | 10       |          |      |        |
+| task                    | priority | comments | done | tested |
+| ----------------------- | -------- | -------- | ---- | ------ |
+| OLED Screen             | 0        |          | Y    | Y      |
+| Wifi                    | 0        |          | Y    | Y      |
+| Wifi/BT local settings  | 0        |          |      |        |
+| Ethernet                | 4        |          | Y    | Y      |
+| SHT31                   | 0        |          | Y    | Y      |
+| D7s                     | 10       |          | Y    | Y      |
+| Sensor API              | 10       |          | Y    | Y      |
+| MQTT init               | 2        |          | Y    | Y      |
+| MQTT used               | 3        |          | Y    | Y      |
+| MQTT secured            | 10       |          |      |        |
+| SPIFFS                  | 0        |          | Y    | Y      |
+| LORA                    | 0        |          |      |        |
+| Replace config with NVS | 0        |          |      |        |
+| Read local config       | 0        |          | Y    | Y      |
+| Save local config       | 10       |          |      |        |
+| Use local config        | 10       |          | Y    | Y      |
+| WebServer settings      | 10       |          |      |        |
+| WebServer/remote log    | 10       |          |      |        |
+| Webserver display       | 10       |          |      |        |
+| OTA update              | 10       |          |      |        |
 
 ## WESP32:
 
@@ -53,6 +54,7 @@ https://www.14core.com/wiring-d7s-seismic-earthquake-detection-mapping-intensity
 Based on the template application to be used with [Espressif IoT Development Framework](https://github.com/espressif/esp-idf).
 
 Please check [ESP-IDF docs](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/index.html) for getting started instructions.
+Requires cygwin with g++ and gcc.
 
 _Code in this repository is in the Public Domain (or CC0 licensed, at your option.)
 Unless required by applicable law or agreed to in writing, this

@@ -108,7 +108,6 @@ static esp_err_t load_config(void){
 	config_data.refresh_rate = atoi(extract_between(file_buf, "refresh_rate=", ";"));
 	config_data.alarm_treshold_min = atoi(extract_between(file_buf, "alarm_treshold_min=", ";"));
 	config_data.alarm_treshold_max = atoi(extract_between(file_buf, "alarm_treshold_max=", ";"));
-	strcpy(config_data.esp32_ip, extract_between(file_buf, "esp32_ip=", ";"));
 	strcpy(config_data.mqtt_ip, extract_between(file_buf, "mqtt_ip=", ";"));
 	config_data.log_activ = atoi(extract_between(file_buf, "log_activ=", ";"));
 	config_data.log_days = atoi(extract_between(file_buf, "log_days=", ";"));
