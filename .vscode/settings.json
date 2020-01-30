@@ -24,7 +24,16 @@
         "httpd-espfs.h": "c",
         "espfs.h": "c",
         "espfsformat.h": "c",
-        "esp.h": "c"
+        "esp.h": "c",
+        "xlocale": "c",
+        "typeinfo": "c",
+        "initializer_list": "c",
+        "list": "c",
+        "type_traits": "c",
+        "xhash": "c",
+        "string_view": "c",
+        "utility": "c",
+        "*.inc": "c"
     },
     "python.pythonPath": "C:\\Users\\sanjay.govind\\.espressif\\python_env\\idf4.1_py3.7_env\\Scripts\\python.exe"
 }

@@ -80,7 +80,7 @@ void app_main(void) {
     esp_log_level_set("TRANSPORT_SSL", ESP_LOG_VERBOSE);
     esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
     esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
-	// init_config();
+	init_config();
 	//Coms
 	init_coms();
 	
@@ -102,10 +102,10 @@ void app_main(void) {
 	                  MAX_CONNECTIONS,
 	                  HTTPD_FLAG_NONE);
 	httpdFreertosStart(&httpdFreertosInstance);
-	// initialise_sensors();
+	initialise_sensors();
 	
 	ESP_LOGI(TAG, "MQTT Initialize");
-	// mqtt_init();
+	mqtt_init();
 	
 	ESP_LOGI(TAG, "Initializing done" );
 }

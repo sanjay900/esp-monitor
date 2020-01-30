@@ -8,11 +8,7 @@ typedef struct{
 	char sensors[10][4];
 	int sensor_count;
 	int refresh_rate;
-	int alarm_treshold_min;
-	int alarm_treshold_max;
 	char mqtt_ip[64];
-	int log_activ;
-	int log_days;
 } config_struct;
 
 extern config_struct config_data;

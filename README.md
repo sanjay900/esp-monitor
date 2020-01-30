@@ -14,7 +14,7 @@
 | MQTT secured            | 10       |          |      |        |
 | SPIFFS                  | 0        |          | Y    | Y      |
 | LORA                    | 0        |          |      |        |
-| Replace config with NVS | 0        |          |      |        |
+| Replace config with NVS | 0        |          | Y    | Y      |
 | Read local config       | 0        |          | Y    | Y      |
 | Save local config       | 10       |          |      |        |
 | Use local config        | 10       |          | Y    | Y      |

@@ -3,9 +3,18 @@
 #include "esp_err.h"
 #include <string.h>
 #include "nvs_flash.h"
-#include "esp_spiffs.h"   
 static const char *TAG = "Environment Sensor - Config Handler";
-config_struct config_data;
+config_struct config_data={
+	.f_version="1.3",
+	.h_version="1.0",
+	.id=12,
+	.name="test_sensor",
+	.location="it_room",
+	.sensors={"TH","SI"},
+	.sensor_count=2,
+	.refresh_rate=1000,
+	.mqtt_ip="mqtt://toxidy.forge.wetaworkshop.co.nz:1883"
+};
 /** INIT NVS **/
 esp_err_t init_NVS(void){
     ESP_LOGD(TAG, "Initializing NVS");
@@ -17,110 +26,43 @@ esp_err_t init_NVS(void){
     return ret;
 }
 
-/** INIT SPIFFS **/
-esp_err_t init_spiffs(void){
-    ESP_LOGD(TAG, "Initializing SPIFFS");
-
-    esp_vfs_spiffs_conf_t conf = {
-    .base_path = "/spiffs",
-    .partition_label = NULL,
-    .max_files = 10,   // This decides the maximum number of files that can be created on the storage
-    .format_if_mount_failed = true
-    };
-
-    esp_err_t ret = esp_vfs_spiffs_register(&conf);
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) {
-            ESP_LOGE(TAG, "Failed to mount or format filesystem");
-        } else if (ret == ESP_ERR_NOT_FOUND) {
-            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
-        } else {
-            ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
-        }
-        return ESP_FAIL;
-    }
-
-    size_t total = 0, used = 0;
-    ret = esp_spiffs_info(NULL, &total, &used);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
-        return ESP_FAIL;
-    }
-
-    ESP_LOGD(TAG, "Partition size: total: %d, used: %d", total, used);
-    return ESP_OK;
-}
-
-
-/* -- User tasks --------------------------------------------------- */
-char *extract_between(const char *str, const char *p1, const char *p2){
-	const char *i1 = strstr(str, p1);
-	if(i1 != NULL){
-		const size_t pl1 = strlen(p1);
-		const char *i2 = strstr(i1 + pl1, p2);
-		if(p2 != NULL){
-			/* Found both markers, extract text. */
-			const size_t mlen = i2 - (i1 + pl1);
-			char *ret = malloc(mlen + 1);
-			if(ret != NULL){
-				memcpy(ret, i1 + pl1, mlen);
-				ret[mlen] = '\0';
-				return ret;
-			}
+static esp_err_t load_config(void){
+	nvs_handle_t my_handle;
+    esp_err_t err = nvs_open("config", NVS_READWRITE, &my_handle);
+	size_t size = sizeof(config_data.f_version);
+	err = nvs_get_str(my_handle, "f_version", config_data.f_version, &size);	
+	size = sizeof(config_data.h_version);
+	err = nvs_get_str(my_handle, "h_version", config_data.h_version, &size);	
+	err = nvs_get_i32(my_handle, "id", &config_data.id);	
+	size = sizeof(config_data.name);
+	err = nvs_get_str(my_handle, "name", config_data.name, &size);	
+	size = sizeof(config_data.location);
+	err = nvs_get_str(my_handle, "location", config_data.location, &size);
+	size = sizeof(config_data.sensors);	
+	char sensors[size];	
+	err = nvs_get_str(my_handle, "sensors", sensors, &size);
+	if (err == ESP_OK) {	
+		char *token;
+		token = strtok(sensors, ",");
+		while (token != NULL) {
+			ESP_LOGI(TAG, "Reading: %d -> %s", config_data.sensor_count, token);
+			strcpy(config_data.sensors[config_data.sensor_count++], token);
+			token = strtok(NULL, ",");
 		}
 	}
-	return NULL;
-}
-  
-static esp_err_t load_config(void){
-	const char *filepath = "/spiffs/config.txt";
-    FILE *fd = NULL;
-
-    fd = fopen(filepath, "r");
-    if (!fd) {
-        ESP_LOGE(TAG, "Failed to open file : %s", filepath);
-        return ESP_FAIL;
-    }
-	fseek(fd, 0, SEEK_END);
-	unsigned int file_size = ftell(fd);
-	fseek(fd, 0, SEEK_SET);
-	char *file_buf = (char *)malloc(file_size);
-	fread(file_buf, file_size, 1, fd);
-	
-    fclose(fd);
-	ESP_LOGI(TAG, "Config file content : ");
-	ESP_LOGI(TAG, "%s", file_buf);
-	
-	strcpy(config_data.f_version, extract_between(file_buf, "f_version=", ";"));
-	strcpy(config_data.h_version, extract_between(file_buf, "h_version=", ";"));
-	config_data.id = atoi(extract_between(file_buf, "id=", ";"));
-	strcpy(config_data.name, extract_between(file_buf, "name=", ";"));
-	strcpy(config_data.location, extract_between(file_buf, "location=", ";"));
-	char sensors[sizeof(config_data.sensors)];
-	strcpy(sensors, extract_between(file_buf, "sensors=", ";"));
-	char *token;
-	token = strtok(sensors, ",");
-	while (token != NULL) {
-		ESP_LOGI(TAG, "Reading: %d -> %s", config_data.sensor_count, token);
-		strcpy(config_data.sensors[config_data.sensor_count++], token);
-		token = strtok(NULL, ",");
-	}
-	config_data.refresh_rate = atoi(extract_between(file_buf, "refresh_rate=", ";"));
-	config_data.alarm_treshold_min = atoi(extract_between(file_buf, "alarm_treshold_min=", ";"));
-	config_data.alarm_treshold_max = atoi(extract_between(file_buf, "alarm_treshold_max=", ";"));
-	strcpy(config_data.mqtt_ip, extract_between(file_buf, "mqtt_ip=", ";"));
-	config_data.log_activ = atoi(extract_between(file_buf, "log_activ=", ";"));
-	config_data.log_days = atoi(extract_between(file_buf, "log_days=", ";"));
+	err = nvs_get_i32(my_handle, "refresh_rate", &config_data.refresh_rate);	
+	size = sizeof(config_data.mqtt_ip);	
+	err = nvs_get_str(my_handle, "mqtt_ip", config_data.mqtt_ip, &size);	
 
 	//ESP_LOGI(TAG, "%s", config_data);
 	
 	return ESP_OK;
 }
 void init_config(void) {
-	//Spiffs 
-    ESP_ERROR_CHECK(init_spiffs());
-	//Config
-	load_config();
+	// //Spiffs 
+    // ESP_ERROR_CHECK(init_spiffs());
 	//NVS
 	ESP_ERROR_CHECK(init_NVS());
+	//Config
+	load_config();
 }
