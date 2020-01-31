@@ -6,36 +6,67 @@
 	<meta charset="utf-8"/>
 	<link rel="icon" href="data:,">
 	<link rel="stylesheet" type="text/css" href="style.css">
+	<script src="ansi_up.js" type="text/javascript"></script>
 	<script type="text/javascript">
-		function loadConfigDoc() {
-		  var xmlhttp = new XMLHttpRequest();
-		  xmlhttp.onreadystatechange = function() {
-			if (this.readyState == 4 && this.status == 200) {
-					loadData(this);
-			}
-		  };
-		  xmlhttp.open("GET", "config.txt" , true);
-		  xmlhttp.send();
-		}
 
-		function loadData(txt) {
-			var allText = txt.responseText;
-			var pos = allText.indexOf("f_version=") + 10;
-			var end = allText.indexOf(";", pos);
-			document.getElementById("f_version").innerHTML = allText.slice(pos, end);
-			pos = allText.indexOf("h_version=") + 10;
-			end = allText.indexOf(";", pos);
-			document.getElementById("h_version").innerHTML = allText.slice(pos, end);
-			pos = allText.indexOf("sensor_type=") + 12;
-			end = allText.indexOf(";", pos);
-			document.getElementById("sensor_type").innerHTML = allText.slice(pos, end);
-			pos = allText.indexOf("location=") + 9;
-			end = allText.indexOf(";", pos);
-			document.getElementById("location").innerHTML = allText.slice(pos, end);
+		var ansi_up = new AnsiUp;
+		var wsUri = "ws://"+window.location.host+"/websocket/ws.cgi";
+		var output;
+	  
+		function init()
+		{
+		  output = document.getElementById("output");
+		  testWebSocket();
 		}
-	</script>
+	  
+		function testWebSocket()
+		{
+		  websocket = new WebSocket(wsUri);
+		  websocket.onopen = function(evt) { onOpen(evt) };
+		  websocket.onclose = function(evt) { onClose(evt) };
+		  websocket.onmessage = function(evt) { onMessage(evt) };
+		  websocket.onerror = function(evt) { onError(evt) };
+		}
+	  
+		function onOpen(evt)
+		{
+			// Get existing log and print it here.
+		  writeToScreen("CONNECTED");
+		}
+	  
+		function onClose(evt)
+		{
+		  writeToScreen("DISCONNECTED");
+		}
+	  
+		function onMessage(evt)
+		{
+		  writeToScreen(ansi_up.ansi_to_html(evt.data));
+		}
+	  
+		function onError(evt)
+		{
+		  writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+		}
+	  
+		function doSend(message)
+		{
+		  websocket.send(message);
+		}
+	  
+		function writeToScreen(message)
+		{
+		  var pre = document.createElement("p");
+		  pre.style.wordWrap = "break-word";
+		  pre.innerHTML = message;
+		  output.appendChild(pre);
+		}
+	  
+		window.addEventListener("load", init, false);
+	  
+	  </script>
 </head>
-<body onload="loadConfigDoc();">
+<body>
 	<div class="topnav">
 		<a href="index.html">Configuration</a>
 		<a class="active" href="log.html">Log</a>
@@ -50,9 +81,7 @@
   
 	<h1>ESP-MONITOR - LOG</h1>
 
-	<div style="border:1px solid #ccc;font:16px/26px Georgia, Garamond, Serif;overflow:auto;">
-	%LOG%
-	</div>
+	<pre id="output"></pre>
   
 </body>
 </html>

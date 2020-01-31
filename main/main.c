@@ -40,12 +40,24 @@
 #define I2CSensor_FREQ I2C_FREQ_400K
 #define LISTEN_PORT     80u
 #define MAX_CONNECTIONS 32u
-
+static void myWebsocketRecv(Websock *ws, char *data, int len, int flags) {
+	// int i;
+	// char buff[128];
+	// sprintf(buff, "You sent: ");
+	// for (i=0; i<len; i++) buff[i+10]=data[i];
+	// buff[i+10]=0;
+	// cgiWebsocketSend(&httpdFreertosInstance.httpdInstance,
+	//                  ws, buff, strlen(buff), WEBSOCK_FLAG_NONE);
+}
+static void myWebsocketConnect(Websock *ws) {
+	ws->recvCb=myWebsocketRecv;
+}
 static char connectionMemory[sizeof(RtosConnType) * MAX_CONNECTIONS];
 static HttpdFreertosInstance httpdFreertosInstance;
 
 const HttpdBuiltInUrl builtInUrls[]={
 	ROUTE_REDIRECT("/", "/index.html"),
+	ROUTE_WS("/websocket/ws.cgi", myWebsocketConnect),
 	ROUTE_FILESYSTEM(),
 	ROUTE_END()
 };
@@ -69,6 +81,15 @@ void initialise_sensors(void) {
 	init_sensor_read_task();
 
 }
+static char log_print_buffer[512];
+static vprintf_like_t orig_esp_log = NULL;
+static int vprintf_into_spiffs(const char* szFormat, va_list args) {
+	// orig_esp_log(szFormat, args);
+	//write evaluated format string into buffer
+	int ret = vsnprintf (log_print_buffer, sizeof(log_print_buffer), szFormat, args);
+	cgiWebsockBroadcast(&httpdFreertosInstance.httpdInstance, "/websocket/ws.cgi", log_print_buffer, strlen(log_print_buffer),  WEBSOCK_FLAG_NONE);
+	return ret;
+}
 void app_main(void) {
 	ESP_LOGI(TAG, "Initializing processes" );
 	ESP_LOGI(TAG, "IDF-Version" );
@@ -83,13 +104,13 @@ void app_main(void) {
 	init_config();
 	//Coms
 	init_coms();
-	
 	//Wait for connection
 	ESP_LOGI(TAG, "Waiting for connection before continuing to init" );
 	while(isConnected == 0){
 		// ESP_LOGI(TAG, "." ); 
 		vTaskDelay(10);
 	};
+	
     EspFsConfig espfs_conf = {
 		.memAddr = espfs_image_bin,
 	};
@@ -102,6 +123,8 @@ void app_main(void) {
 	                  MAX_CONNECTIONS,
 	                  HTTPD_FLAG_NONE);
 	httpdFreertosStart(&httpdFreertosInstance);
+	
+	esp_log_set_vprintf(vprintf_into_spiffs);
 	initialise_sensors();
 	
 	ESP_LOGI(TAG, "MQTT Initialize");
