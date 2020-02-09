@@ -46,7 +46,7 @@
 	  
 		function onError(evt)
 		{
-		  writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+		  writeToScreen('<span style="color: red;">ERROR:</span> ' + evt);
 		}
 	  
 		function doSend(message)

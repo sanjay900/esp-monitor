@@ -33,6 +33,7 @@
 #include "libesphttpd/cgiwebsocket.h"
 #include "libesphttpd/httpd-freertos.h"
 #include "libesphttpd/route.h"
+#include "cgi.h"
 
 #define I2CSensor_BUS 0
 #define I2CSensor_SCL_PIN 5
@@ -54,9 +55,11 @@ static void myWebsocketConnect(Websock *ws) {
 }
 static char connectionMemory[sizeof(RtosConnType) * MAX_CONNECTIONS];
 static HttpdFreertosInstance httpdFreertosInstance;
-
-const HttpdBuiltInUrl builtInUrls[]={
-	ROUTE_REDIRECT("/", "/index.html"),
+HttpdBuiltInUrl builtInUrls[]={
+	ROUTE_REDIRECT("/", "/index.tpl"),
+	ROUTE_TPL("/index.tpl", tplCurrentConfig),
+	ROUTE_TPL("/log.tpl", tplCurrentConfig),
+	ROUTE_TPL("/sensor_data.tpl", tplCurrentConfig),
 	ROUTE_WS("/websocket/ws.cgi", myWebsocketConnect),
 	ROUTE_FILESYSTEM(),
 	ROUTE_END()
@@ -84,13 +87,15 @@ void initialise_sensors(void) {
 static char log_print_buffer[512];
 static vprintf_like_t orig_esp_log = NULL;
 static int vprintf_into_spiffs(const char* szFormat, va_list args) {
-	// orig_esp_log(szFormat, args);
+	orig_esp_log(szFormat, args);
 	//write evaluated format string into buffer
 	int ret = vsnprintf (log_print_buffer, sizeof(log_print_buffer), szFormat, args);
 	cgiWebsockBroadcast(&httpdFreertosInstance.httpdInstance, "/websocket/ws.cgi", log_print_buffer, strlen(log_print_buffer),  WEBSOCK_FLAG_NONE);
 	return ret;
 }
 void app_main(void) {
+	
+	orig_esp_log = esp_log_set_vprintf(vprintf_into_spiffs);
 	ESP_LOGI(TAG, "Initializing processes" );
 	ESP_LOGI(TAG, "IDF-Version" );
 	ESP_LOGI(TAG, "%s" , IDF_VER);
@@ -123,8 +128,6 @@ void app_main(void) {
 	                  MAX_CONNECTIONS,
 	                  HTTPD_FLAG_NONE);
 	httpdFreertosStart(&httpdFreertosInstance);
-	
-	esp_log_set_vprintf(vprintf_into_spiffs);
 	initialise_sensors();
 	
 	ESP_LOGI(TAG, "MQTT Initialize");

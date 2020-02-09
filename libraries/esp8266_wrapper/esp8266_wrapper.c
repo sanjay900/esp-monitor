@@ -104,8 +104,6 @@ int i2c_slave_read(uint8_t bus, uint8_t addr, uint8_t *reg, uint32_t regLen, uin
     i2c_master_cmd_begin(bus, cmd, 100 / portTICK_RATE_MS);
     i2c_cmd_link_delete(cmd);
     cmd = i2c_cmd_link_create();
-    // This may be necessary.
-    // vTaskDelay(20);
   }
   if (data) {
     i2c_master_start(cmd);
