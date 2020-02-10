@@ -79,9 +79,9 @@
 </head>
 <body onload="loadConfigDoc();">
 	<div class="topnav">
-		<a class="active" href="index.html">Configuration</a>
-		<a href="log.html">Log</a>
-		<a href="sensor_data.html">Sensor data</a>
+		<a class="active" href="index.tpl">Configuration</a>
+		<a href="log.tpl">Log</a>
+		<a href="sensor_data.tpl">Sensor data</a>
 		<div class="info">
 			Firmware Version: <strong id="f_version"> %F_VERSION%</strong><br>
 			Hardware Version: <strong id="h_version"> %H_VERSION%</strong><br>

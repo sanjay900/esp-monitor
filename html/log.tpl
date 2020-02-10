@@ -10,7 +10,7 @@
 	<script type="text/javascript">
 
 		var ansi_up = new AnsiUp;
-		var wsUri = "ws://"+window.location.host+"/websocket/ws.cgi";
+		var wsUri = "ws://"+window.location.host+"/websocket/log.cgi";
 		var output;
 	  
 		function init()
@@ -68,9 +68,9 @@
 </head>
 <body>
 	<div class="topnav">
-		<a href="index.html">Configuration</a>
-		<a class="active" href="log.html">Log</a>
-		<a href="sensor_data.html">Sensor data</a>
+		<a href="index.tpl">Configuration</a>
+		<a class="active" href="log.tpl">Log</a>
+		<a href="sensor_data.tpl">Sensor data</a>
 		<div class="info">
 			Firmware Version: <strong id="f_version"> %F_VERSION%</strong><br>
 			Hardware Version: <strong id="h_version"> %H_VERSION%</strong><br>

@@ -33,7 +33,8 @@
         "xhash": "c",
         "string_view": "c",
         "utility": "c",
-        "*.inc": "c"
+        "*.inc": "c",
+        "cstring": "c"
     },
     "python.pythonPath": "C:\\Users\\sanjay.govind\\.espressif\\python_env\\idf4.1_py3.7_env\\Scripts\\python.exe"
 }

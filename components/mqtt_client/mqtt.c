@@ -1,13 +1,7 @@
 #include "mqtt.h"
-#include "mqtt_client.h"
-#include "esp_system.h"
-#include "config.h"
-#include "esp_log.h"
-#include "sensor.h"
 static const char *TAG = "Environment Sensor - MQTT Handler";
-
 static esp_mqtt_client_handle_t mqttClient;
-
+void (*on_message)(message_t* msg);
 static bool mqttStatus = 0;
 /** Event handler for MQTT events */
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event) {
@@ -48,6 +42,7 @@ void mqtt_send(void *pvParameters) {
 	while (1) {
         for (uint8_t i =0; i < current_sensor; i++) {
             while (xQueueReceive(sensors[i]->messages, &msg, (TickType_t)0)) {
+                on_message(&msg);
                 esp_mqtt_client_publish(mqttClient, msg.topic, msg.message, 0, 1, 0);
             }
         }		

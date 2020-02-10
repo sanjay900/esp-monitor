@@ -41,7 +41,7 @@
 #define I2CSensor_FREQ I2C_FREQ_400K
 #define LISTEN_PORT     80u
 #define MAX_CONNECTIONS 32u
-static void myWebsocketRecv(Websock *ws, char *data, int len, int flags) {
+static void websocketRecv(Websock *ws, char *data, int len, int flags) {
 	// int i;
 	// char buff[128];
 	// sprintf(buff, "You sent: ");
@@ -50,8 +50,8 @@ static void myWebsocketRecv(Websock *ws, char *data, int len, int flags) {
 	// cgiWebsocketSend(&httpdFreertosInstance.httpdInstance,
 	//                  ws, buff, strlen(buff), WEBSOCK_FLAG_NONE);
 }
-static void myWebsocketConnect(Websock *ws) {
-	ws->recvCb=myWebsocketRecv;
+static void websocketConnect(Websock *ws) {
+	ws->recvCb=websocketRecv;
 }
 static char connectionMemory[sizeof(RtosConnType) * MAX_CONNECTIONS];
 static HttpdFreertosInstance httpdFreertosInstance;
@@ -60,7 +60,8 @@ HttpdBuiltInUrl builtInUrls[]={
 	ROUTE_TPL("/index.tpl", tplCurrentConfig),
 	ROUTE_TPL("/log.tpl", tplCurrentConfig),
 	ROUTE_TPL("/sensor_data.tpl", tplCurrentConfig),
-	ROUTE_WS("/websocket/ws.cgi", myWebsocketConnect),
+	ROUTE_WS("/websocket/log.cgi", websocketConnect),
+	ROUTE_WS("/websocket/sensors.cgi", websocketConnect),
 	ROUTE_FILESYSTEM(),
 	ROUTE_END()
 };
@@ -90,8 +91,13 @@ static int vprintf_into_spiffs(const char* szFormat, va_list args) {
 	orig_esp_log(szFormat, args);
 	//write evaluated format string into buffer
 	int ret = vsnprintf (log_print_buffer, sizeof(log_print_buffer), szFormat, args);
-	cgiWebsockBroadcast(&httpdFreertosInstance.httpdInstance, "/websocket/ws.cgi", log_print_buffer, strlen(log_print_buffer),  WEBSOCK_FLAG_NONE);
+	cgiWebsockBroadcast(&httpdFreertosInstance.httpdInstance, "/websocket/log.cgi", log_print_buffer, strlen(log_print_buffer),  WEBSOCK_FLAG_NONE);
 	return ret;
+}
+static char sensor_print_buffer[512];
+void send_sensor(message_t* msg) {
+	sprintf(sensor_print_buffer, "%s: %s", msg->topic, msg->message);
+	cgiWebsockBroadcast(&httpdFreertosInstance.httpdInstance, "/websocket/sensors.cgi", sensor_print_buffer, strlen(sensor_print_buffer),  WEBSOCK_FLAG_NONE);
 }
 void app_main(void) {
 	
@@ -132,6 +138,7 @@ void app_main(void) {
 	
 	ESP_LOGI(TAG, "MQTT Initialize");
 	mqtt_init();
+	on_message = send_sensor;
 	
 	ESP_LOGI(TAG, "Initializing done" );
 }
