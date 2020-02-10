@@ -23,8 +23,8 @@
 	</div>
 
 	<h1>ESP-MONITOR - DATA</h1>
-			<script src="Chart.bundle.js"></script>
-			<script src="moment.js"></script>
+			<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
 			<canvas id="myChart" width="400" height="400"></canvas>
 			<script type="text/javascript">
 				window.chartColors = {

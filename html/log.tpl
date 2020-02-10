@@ -6,7 +6,7 @@
 	<meta charset="utf-8"/>
 	<link rel="icon" href="data:,">
 	<link rel="stylesheet" type="text/css" href="style.css">
-	<script src="ansi_up.js" type="text/javascript"></script>
+	<script src="https://cdn.jsdelivr.net/npm/ansi-up@1.0.0/dist/ansi-up.min.js"></script>
 	<script type="text/javascript">
 
 		var ansi_up = new AnsiUp;

@@ -8,4 +8,4 @@ set(EXTRA_COMPONENT_DIRS "libraries")
 
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(app-template)
+project(esp-monitor)

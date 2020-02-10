@@ -4,24 +4,25 @@
 | ----------------------- | -------- | -------- | ---- | ------ |
 | OLED Screen             | 0        |          | Y    | Y      |
 | Wifi                    | 0        |          | Y    | Y      |
-| Wifi/BT local settings  | 0        |          |      |        |
 | Ethernet                | 4        |          | Y    | Y      |
 | SHT31                   | 0        |          | Y    | Y      |
 | D7s                     | 10       |          | Y    | Y      |
 | Sensor API              | 10       |          | Y    | Y      |
 | MQTT init               | 2        |          | Y    | Y      |
 | MQTT used               | 3        |          | Y    | Y      |
-| MQTT secured            | 10       |          |      |        |
 | SPIFFS                  | 0        |          | Y    | Y      |
-| LORA                    | 0        |          |      |        |
 | Replace config with NVS | 0        |          | Y    | Y      |
 | Read local config       | 0        |          | Y    | Y      |
-| Save local config       | 10       |          |      |        |
 | Use local config        | 10       |          | Y    | Y      |
+| WebServer/remote log    | 10       |          | Y    | Y      |
+| Webserver display       | 10       |          | Y    | Y      |
+| OTA update              | 10       |          | Y    | Y      |
+| Wifi/BT local settings  | 0        |          |      |        |
+| MQTT secured            | 10       |          |      |        |
+| LORA                    | 0        |          |      |        |
+| Save local config       | 10       |          |      |        |
 | WebServer settings      | 10       |          |      |        |
-| WebServer/remote log    | 10       |          |      |        |
-| Webserver display       | 10       |          |      |        |
-| OTA update              | 10       |          |      |        |
+| Fix Memory Issues       | 10       |          |      |        |
 
 ## WESP32:
 
