@@ -35,6 +35,7 @@
 #include "sht3x.h"
 #include <libesphttpd/esp.h>
 
+
 #define I2CSensor_BUS 0
 #define I2CSensor_SCL_PIN 5
 #define I2CSensor_SDA_PIN 33
@@ -44,13 +45,12 @@
 #define OTA_FLASH_SIZE_K 1024
 #define OTA_TAGNAME "generic"
 
-CgiUploadFlashDef uploadParams={
-	.type=CGIFLASH_TYPE_FW,
-	.fw1Pos=0x1000,
-	.fw2Pos=((OTA_FLASH_SIZE_K*1024)/2)+0x1000,
-	.fwSize=((OTA_FLASH_SIZE_K*1024)/2)-0x1000,
-	.tagName=OTA_TAGNAME
-};
+CgiUploadFlashDef uploadParams = {
+    .type = CGIFLASH_TYPE_FW,
+    .fw1Pos = 0x1000,
+    .fw2Pos = ((OTA_FLASH_SIZE_K * 1024) / 2) + 0x1000,
+    .fwSize = ((OTA_FLASH_SIZE_K * 1024) / 2) - 0x1000,
+    .tagName = OTA_TAGNAME};
 static void websocketRecv(Websock *ws, char *data, int len, int flags) {
   // int i;
   // char buff[128];
@@ -66,22 +66,23 @@ static HttpdFreertosInstance httpdFreertosInstance;
 HttpdBuiltInUrl builtInUrls[] = {
     ROUTE_REDIRECT("/", "/index.tpl"),
 
-    ROUTE_REDIRECT("/flash", "/flash/index.html"),
-    ROUTE_REDIRECT("/flash/", "/flash/index.html"),
+    ROUTE_REDIRECT("/flash", "/flash/index.tpl"),
+    ROUTE_REDIRECT("/flash/", "/flash/index.tpl"),
+    ROUTE_TPL("/flash/index.tpl", tplCurrentConfig),
     ROUTE_CGI("/flash/flashinfo.json", cgiGetFlashInfo),
     ROUTE_CGI("/flash/setboot", cgiSetBoot),
     ROUTE_CGI_ARG("/flash/upload", cgiUploadFirmware, &uploadParams),
     ROUTE_CGI_ARG("/flash/erase", cgiEraseFlash, &uploadParams),
     ROUTE_CGI("/flash/reboot", cgiRebootFirmware),
-	ROUTE_REDIRECT("/wifi", "/wifi/wifi.tpl"),
-	ROUTE_REDIRECT("/wifi/", "/wifi/wifi.tpl"),
-	ROUTE_CGI("/wifi/wifiscan.cgi", cgiWiFiScan),
-	ROUTE_TPL("/wifi/wifi.tpl", tplWlan),
-	ROUTE_CGI("/wifi/connect.cgi", cgiWiFiConnect),
-	ROUTE_CGI("/wifi/connstatus.cgi", cgiWiFiConnStatus),
-	ROUTE_CGI("/wifi/setmode.cgi", cgiWiFiSetMode),
-	ROUTE_CGI("/wifi/startwps.cgi", cgiWiFiStartWps),
-	ROUTE_CGI("/wifi/ap", cgiWiFiAPSettings),
+    ROUTE_REDIRECT("/wifi", "/wifi/wifi.tpl"),
+    ROUTE_REDIRECT("/wifi/", "/wifi/wifi.tpl"),
+    ROUTE_CGI("/wifi/wifiscan.cgi", cgiWiFiScan),
+    ROUTE_TPL("/wifi/wifi.tpl", tplWlan),
+    ROUTE_CGI("/wifi/connect.cgi", cgiWiFiConnect),
+    ROUTE_CGI("/wifi/connstatus.cgi", cgiWiFiConnStatus),
+    ROUTE_CGI("/wifi/setmode.cgi", cgiWiFiSetMode),
+    ROUTE_CGI("/wifi/startwps.cgi", cgiWiFiStartWps),
+    ROUTE_CGI("/wifi/ap", cgiWiFiAPSettings),
     ROUTE_TPL("/index.tpl", tplCurrentConfig),
     ROUTE_TPL("/log.tpl", tplCurrentConfig),
     ROUTE_TPL("/sensor_data.tpl", tplCurrentConfig),
@@ -127,6 +128,7 @@ void send_sensor(message_t *msg) {
                       "/websocket/sensors.cgi", sensor_print_buffer,
                       strlen(sensor_print_buffer), WEBSOCK_FLAG_NONE);
 }
+
 void app_main(void) {
 
   orig_esp_log = esp_log_set_vprintf(vprintf_into_spiffs);
@@ -140,6 +142,7 @@ void app_main(void) {
   esp_log_level_set("TRANSPORT_SSL", ESP_LOG_VERBOSE);
   esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
   esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
+  esp_log_level_set("wifi", ESP_LOG_VERBOSE);
   init_config();
   // Coms
   init_coms();
@@ -150,14 +153,17 @@ void app_main(void) {
     vTaskDelay(10);
   };
 
+  
   EspFsConfig espfs_conf = {
       .memAddr = espfs_image_bin,
   };
   EspFs *fs = espFsInit(&espfs_conf);
   httpdRegisterEspfs(fs);
+
   httpdFreertosInit(&httpdFreertosInstance, builtInUrls, LISTEN_PORT,
                     connectionMemory, MAX_CONNECTIONS, HTTPD_FLAG_NONE);
   httpdFreertosStart(&httpdFreertosInstance);
+  
   initialise_sensors();
 
   ESP_LOGI(TAG, "MQTT Initialize");

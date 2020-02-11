@@ -80,7 +80,13 @@
   </script>
 </head>
 <body>
-  <button onclick="location.href='/'">Back</button>
+<div class="topnav">
+    <a href="/index.tpl">Configuration</a>
+    <a href="/log.tpl">Log</a>
+    <a href="/sensor_data.tpl">Sensor data</a>
+    <a href="/flash">OTA Upload</a>
+    <a class="active" href="/wifi/wifi.tpl">Wifi Config</a>
+</div> 
   <div id="main">
     <div style="margin-top: 30px; padding: 0px 10px; border: 1px solid;">
       <h4>WiFi Mode</h4>

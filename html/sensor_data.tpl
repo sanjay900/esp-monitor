@@ -14,6 +14,8 @@
 		<a href="index.tpl">Configuration</a>
 		<a href="log.tpl">Log</a>
 		<a class="active" href="sensor_data.tpl">Sensor data</a>
+		<a href="flash/flash.tpl">OTA Upload</a>
+		<a href="wifi/wifi.tpl">Network Config</a>
 		<div class="info">
 			Firmware Version: <strong id="f_version"> %F_VERSION%</strong><br>
 			Hardware Version: <strong id="h_version"> %H_VERSION%</strong><br>
@@ -23,8 +25,7 @@
 	</div>
 
 	<h1>ESP-MONITOR - DATA</h1>
-			<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
-			<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js" integrity="sha256-TQq84xX6vkwR0Qs1qH5ADkP+MvH0W+9E7TdHJsoIQiM=" crossorigin="anonymous"></script>
 			<canvas id="myChart" width="400" height="400"></canvas>
 			<script type="text/javascript">
 				window.chartColors = {

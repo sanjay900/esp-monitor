@@ -180,6 +180,19 @@ table {
 </style>
 </head>
 <body>
+<div class="topnav">
+    <a href="/index.tpl">Configuration</a>
+    <a href="/log.tpl">Log</a>
+    <a href="/sensor_data.tpl">Sensor data</a>
+    <a class="active" href="/flash/index.tpl">OTA Upload</a>
+    <a href="/wifi/wifi.tpl">Wifi Config</a>
+    <div class="info">
+        Firmware Version: <strong id="f_version"> %F_VERSION%</strong><br>
+        Hardware Version: <strong id="h_version"> %H_VERSION%</strong><br>
+        Sensor Type: <strong id="sensor_type"> %S_TYPE%</strong><br>
+        Location: <strong id="location"> %S_LOCATION%</strong><br>
+    </div>
+</div> 
 <div id="main">
 <h1>Upgrade Firmware</h1>
 
