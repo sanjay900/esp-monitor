@@ -18,11 +18,9 @@
 | Webserver display       | 10       |          | Y    | Y      |
 | OTA update              | 10       |          | Y    | Y      |
 | Wifi local settings     | 0        |          | Y    | Y      |
-| BT local settings       | 0        |          |      |        |
-| MQTT secured            | 10       |          |      |        |
-| LORA                    | 0        |          |      |        |
+| Fix Memory Issues       | 10       |          | Y    | Y      |
 | Save local config       | 10       |          |      |        |
-| Fix Memory Issues       | 10       |          |      |        |
+| LORA                    | 0        |          |      |        |
 
 ## WESP32:
 

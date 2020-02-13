@@ -5,7 +5,9 @@ bool isConnected = 0;
 /** Event handler for Got IP events */
 void got_ip_event_handler(void *arg, esp_event_base_t event_base,
                           int32_t event_id, void *event_data) {
-  isConnected = 1;
+  if (event_id == IP_EVENT_ETH_GOT_IP) {
+    isConnected = 1;
+  }
 }
 
 /** INIT Communication **/

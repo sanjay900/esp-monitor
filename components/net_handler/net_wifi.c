@@ -67,7 +67,6 @@ static void app_event_handler(void *arg, esp_event_base_t event_base,
     // the WiFi CGI.
     break;
   case IP_EVENT_STA_GOT_IP: {
-    isConnected = 1;
     tcpip_adapter_ip_info_t sta_ip_info;
     wifi_config_t sta_conf;
     printf("~~~~~STA~~~~~"
@@ -243,7 +242,7 @@ void init_wifi(bool factory_defaults) {
 void init_wifi_adaptor() {
   // Init WIFI
   ESP_LOGD(TAG, "Initializing WIFI...");
-  esp_netif_create_default_wifi_sta();
+  wifi_netif = esp_netif_create_default_wifi_sta();
   esp_err_t err;
   // Init NVS
   err = nvs_flash_init();

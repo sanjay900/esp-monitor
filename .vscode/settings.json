@@ -38,7 +38,10 @@
         "captdns.h": "c",
         "auth.h": "c",
         "cgi.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "net_handler.h": "c",
+        "netif.h": "c",
+        "esp_netif_net_stack.h": "c"
     },
     "python.pythonPath": "C:\\Users\\sanjay.govind\\.espressif\\python_env\\idf4.1_py3.7_env\\Scripts\\python.exe"
 }

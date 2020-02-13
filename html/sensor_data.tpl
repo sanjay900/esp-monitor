@@ -14,7 +14,7 @@
 		<a href="index.tpl">Configuration</a>
 		<a href="log.tpl">Log</a>
 		<a class="active" href="sensor_data.tpl">Sensor data</a>
-		<a href="flash/flash.tpl">OTA Upload</a>
+		<a href="flash/index.tpl">OTA Upload</a>
 		<a href="wifi/wifi.tpl">Network Config</a>
 		<div class="info">
 			Firmware Version: <strong id="f_version"> %F_VERSION%</strong><br>

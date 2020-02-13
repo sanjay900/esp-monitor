@@ -1,4 +1,6 @@
+#include "lwip/netif.h"
 #include "net_handler.h"
+#include "esp_netif_net_stack.h"
 static const char *TAG = "Environment Sensor";
 
 /** Event handler for Ethernet events */
@@ -21,6 +23,7 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base,
     break;
   case ETHERNET_EVENT_START:
     ESP_LOGI(TAG, "Ethernet Started");
+    // netif_set_default((struct netif *)esp_netif_get_netif_impl(eth_netif));
     break;
   case ETHERNET_EVENT_STOP:
     isConnected = 0;
@@ -32,9 +35,9 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base,
 }
 void init_eth_adaptor() {
   ESP_LOGI(TAG, "Initializing ETHERNET...");
-  
+
   esp_netif_config_t cfg = ESP_NETIF_DEFAULT_ETH();
-  esp_netif_t *eth_netif = esp_netif_new(&cfg);
+  eth_netif = esp_netif_new(&cfg);
   // Set default handlers to process TCP/IP stuffs
   ESP_ERROR_CHECK(esp_eth_set_default_handlers(eth_netif));
   ESP_ERROR_CHECK(esp_event_handler_register(ETH_EVENT, ESP_EVENT_ANY_ID,
@@ -57,6 +60,7 @@ void init_eth_adaptor() {
   /* attach Ethernet driver to TCP/IP stack */
   ESP_ERROR_CHECK(
       esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handle)));
+
   /* start Ethernet driver state machine */
   ESP_ERROR_CHECK(esp_eth_start(eth_handle));
   ESP_LOGI(TAG, "ETHERNET initialized");
