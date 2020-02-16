@@ -9,7 +9,6 @@
 #define SENSOR_SHT3X 0
 #define SENSOR_D7S 1 
 #define MAX_MESSAGE_COUNT 10
-#define MAX_SENSOR_COUNT 5
 
 typedef struct message_t {
 	char message[255];

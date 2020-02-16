@@ -39,9 +39,10 @@ static esp_err_t load_config(void){
 	size = sizeof(config_data.location);
 	err = nvs_get_str(my_handle, "location", config_data.location, &size);
 	size = sizeof(config_data.sensors);	
-	char sensors[size];	
+	char sensors[MAX_SENSOR_COUNT*5];	
 	err = nvs_get_str(my_handle, "sensors", sensors, &size);
 	if (err == ESP_OK) {	
+		config_data.sensor_count = 0;
 		char *token;
 		token = strtok(sensors, ",");
 		while (token != NULL) {
@@ -53,7 +54,7 @@ static esp_err_t load_config(void){
 	err = nvs_get_i32(my_handle, "refresh_rate", &config_data.refresh_rate);	
 	size = sizeof(config_data.mqtt_ip);	
 	err = nvs_get_str(my_handle, "mqtt_ip", config_data.mqtt_ip, &size);	
-
+	nvs_close(my_handle);
 	//ESP_LOGI(TAG, "%s", config_data);
 	
 	return ESP_OK;

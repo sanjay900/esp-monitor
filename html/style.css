@@ -28,6 +28,7 @@ p{
   font-size: 30px;
   margin: 2px;
   cursor: pointer;
+  width: auto !
 }
 .button2 {
   background-color: #f44336;
@@ -79,4 +80,22 @@ p{
   background: black;
   padding: 10px 30px;
   border-radius: 20px;
+}
+form > label {
+  display: inline-block;
+  width: 140px;
+  text-align: right;
+}
+
+form > input {
+  /* display: inline-block; */
+  width: 50vw;
+  /* text-align: right; */
+}
+legend {
+  margin: auto;
+}
+
+fieldset {
+  text-align: center;
 }

@@ -19,7 +19,7 @@
 | OTA update              | 10       |          | Y    | Y      |
 | Wifi local settings     | 0        |          | Y    | Y      |
 | Fix Memory Issues       | 10       |          | Y    | Y      |
-| Save local config       | 10       |          |      |        |
+| Save local config       | 10       |          | Y    | Y      |
 | LORA                    | 0        |          |      |        |
 
 ## WESP32:

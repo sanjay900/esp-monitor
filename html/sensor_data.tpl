@@ -19,7 +19,7 @@
 		<div class="info">
 			Firmware Version: <strong id="f_version"> %F_VERSION%</strong><br>
 			Hardware Version: <strong id="h_version"> %H_VERSION%</strong><br>
-			Sensor Type: <strong id="sensor_type"> %S_TYPE%</strong><br>
+			Sensor Type: <strong id="sensor_type"> %S_SENSORS%</strong><br>
 			Location: <strong id="location"> %S_LOCATION%</strong><br>
 		</div>
 	</div>

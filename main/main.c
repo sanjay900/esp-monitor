@@ -65,7 +65,7 @@ static char connectionMemory[sizeof(RtosConnType) * MAX_CONNECTIONS];
 static HttpdFreertosInstance httpdFreertosInstance;
 HttpdBuiltInUrl builtInUrls[] = {
     ROUTE_REDIRECT("/", "/index.tpl"),
-
+    ROUTE_CGI("/config.cgi", cgiConfig),
     ROUTE_REDIRECT("/flash", "/flash/index.tpl"),
     ROUTE_REDIRECT("/flash/", "/flash/index.tpl"),
     ROUTE_TPL("/flash/index.tpl", tplCurrentConfig),
