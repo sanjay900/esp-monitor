@@ -40,6 +40,8 @@ CgiStatus ICACHE_FLASH_ATTR tplCurrentConfig(HttpdConnData *connData,
     for (int i = 0; i < config_data.sensor_count; i++) {
 	    len += sprintf(buff+len, "%s,", config_data.sensors[i]);
     }
+    if (len > 0) len--;
+    buff[len] = '\0';
   }
   httpdSend(connData, buff, -1);
   return HTTPD_CGI_DONE;
@@ -88,23 +90,26 @@ CgiStatus ICACHE_FLASH_ATTR cgiConfig(HttpdConnData *connData) {
 	if (len!=0) {
     nvs_set_str(my_handle, "mqtt_ip", buff);
 	}
-  len = 0;
+  // Clear the buffer
+  buff[0] = '\0';
+  // Look for each sensor, and combine into a single string, delimited by commas
   len=httpdFindArg(connData->post.buff, "TH", buff, sizeof(buff));
 	if (len!=0) {
+    // Replace the null terminator with a comma
     buff[len-1] = ',';
+    // And now add a new null terminator
     buff[len] = '\0';
 	}
+  // If the TH sensor isn't selected, we need to start the buffer at the start, but -1 is returned if it isnt found.
   if (len == -1) len = 0;
+  // Append
   len+=httpdFindArg(connData->post.buff, "SI", buff+len, sizeof(buff-len));
-	if (len!=0) {
-    nvs_set_str(my_handle, "sensors", buff);
-	}
-  
-	ESP_LOGI("CGI", "%s", buff);
+  // Write sensors back
+  nvs_set_str(my_handle, "sensors", buff);
   nvs_commit(my_handle);
   nvs_close(my_handle);
 	httpdRedirect(connData, "index.tpl");
-  resetTimer=httpdPlatTimerCreate("flashreset", 500, 0, resetTimerCb, NULL);
+  resetTimer=httpdPlatTimerCreate("flashreset", 1000, 0, resetTimerCb, NULL);
 	httpdPlatTimerStart(resetTimer);
 	return HTTPD_CGI_DONE;
 }
